@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ms-os-service-migrate
+  namespace: tech-challenge
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: ms-os-service:local
+          command: ["composer", "migrate"]
+          env:
+            - name: DB_HOST
+              value: os-mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: os_service
+            - name: DB_USER
+              value: os_user
+            - name: DB_PASSWORD
+              value: os_pass
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ms-os-service-seed
+  namespace: tech-challenge
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: ms-os-service:local
+          command: ["composer", "seed"]
+          env:
+            - name: DB_HOST
+              value: os-mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: os_service
+            - name: DB_USER
+              value: os_user
+            - name: DB_PASSWORD
+              value: os_pass

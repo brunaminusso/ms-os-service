@@ -1,0 +1,429 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "OS Service API",
+    "version": "1.0.0",
+    "description": "API do OS Service (ordens de servico, clientes, veiculos, servicos e pecas)."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Servidor atual (relativo)"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"}
+        }
+      },
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "cpf": {"type": "string"},
+          "cnpj": {"type": "string"},
+          "email": {"type": "string"},
+          "phone": {"type": "string"},
+          "address": {"type": "string"}
+        }
+      },
+      "ClientInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "cpf": {"type": "string"},
+          "cnpj": {"type": "string"},
+          "email": {"type": "string"},
+          "phone": {"type": "string"},
+          "address": {"type": "string"}
+        }
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "plate": {"type": "string"},
+          "brand": {"type": "string"},
+          "model": {"type": "string"},
+          "year": {"type": "integer"},
+          "color": {"type": "string"},
+          "client_id": {"type": "integer"}
+        }
+      },
+      "VehicleInput": {
+        "type": "object",
+        "required": ["plate", "brand", "model", "year", "client_id"],
+        "properties": {
+          "plate": {"type": "string"},
+          "brand": {"type": "string"},
+          "model": {"type": "string"},
+          "year": {"type": "integer"},
+          "color": {"type": "string"},
+          "client_id": {"type": "integer"}
+        }
+      },
+      "ServiceItem": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "price": {"type": "number"},
+          "price_in_cents": {"type": "integer"},
+          "estimated_duration_minutes": {"type": "integer"},
+          "active": {"type": "boolean"}
+        }
+      },
+      "ServiceInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "price": {"type": "number"}
+        }
+      },
+      "Part": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "code": {"type": "string"},
+          "description": {"type": "string"},
+          "price": {"type": "number"},
+          "price_in_cents": {"type": "integer"},
+          "stock_quantity": {"type": "integer"},
+          "minimum_stock": {"type": "integer"},
+          "active": {"type": "boolean"}
+        }
+      },
+      "PartInput": {
+        "type": "object",
+        "required": ["name", "price"],
+        "properties": {
+          "name": {"type": "string"},
+          "code": {"type": "string"},
+          "description": {"type": "string"},
+          "price": {"type": "number"},
+          "stock_quantity": {"type": "integer"},
+          "minimum_stock": {"type": "integer"},
+          "active": {"type": "boolean"}
+        }
+      },
+      "ServiceOrder": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "order_number": {"type": "string"},
+          "client_id": {"type": "integer"},
+          "vehicle_id": {"type": "integer"},
+          "status": {"type": "string"},
+          "description": {"type": "string"},
+          "services": {"type": "array", "items": {"type": "object"}},
+          "parts": {"type": "array", "items": {"type": "object"}},
+          "quotation_total": {"type": "string"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ServiceOrderCreate": {
+        "type": "object",
+        "required": ["client_id", "vehicle_id", "description"],
+        "properties": {
+          "client_id": {"type": "integer"},
+          "vehicle_id": {"type": "integer"},
+          "description": {"type": "string"},
+          "services": {"type": "array", "items": {"type": "object"}},
+          "parts": {"type": "array", "items": {"type": "object"}
+          }
+        }
+      },
+      "StatusUpdate": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      },
+      "PartStockUpdate": {
+        "type": "object",
+        "required": ["stock_quantity"],
+        "properties": {
+          "stock_quantity": {"type": "integer"}
+        }
+      },
+      "AddServiceItem": {
+        "type": "object",
+        "required": ["service_id", "quantity"],
+        "properties": {
+          "service_id": {"type": "integer"},
+          "quantity": {"type": "integer"}
+        }
+      },
+      "AddPartItem": {
+        "type": "object",
+        "required": ["part_id", "quantity"],
+        "properties": {
+          "part_id": {"type": "integer"},
+          "quantity": {"type": "integer"}
+        }
+      },
+      "RejectQuotation": {
+        "type": "object",
+        "properties": {
+          "reason": {"type": "string"}
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Verificar status",
+        "responses": {
+          "200": {"description": "OK"}
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Verificar readiness",
+        "responses": {
+          "200": {"description": "OK"}
+        }
+      }
+    },
+    "/clients": {
+      "get": {
+        "tags": ["Clients"],
+        "responses": {
+          "200": {
+            "description": "Lista de clientes",
+            "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/Client"}}}}
+          }
+        }
+      },
+      "post": {
+        "tags": ["Clients"],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ClientInput"}}}
+        },
+        "responses": {
+          "201": {"description": "Cliente criado"}
+        }
+      }
+    },
+    "/clients/{id}": {
+      "get": {
+        "tags": ["Clients"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Cliente"}}
+      },
+      "put": {
+        "tags": ["Clients"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ClientInput"}}}
+        },
+        "responses": {"200": {"description": "Cliente atualizado"}}
+      },
+      "delete": {
+        "tags": ["Clients"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Cliente removido"}}
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "tags": ["Vehicles"],
+        "responses": {"200": {"description": "Lista de veiculos"}}
+      },
+      "post": {
+        "tags": ["Vehicles"],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VehicleInput"}}}
+        },
+        "responses": {"201": {"description": "Veiculo criado"}}
+      }
+    },
+    "/vehicles/{id}": {
+      "get": {
+        "tags": ["Vehicles"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Veiculo"}}
+      },
+      "put": {
+        "tags": ["Vehicles"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/VehicleInput"}}}
+        },
+        "responses": {"200": {"description": "Veiculo atualizado"}}
+      },
+      "delete": {
+        "tags": ["Vehicles"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Veiculo removido"}}
+      }
+    },
+    "/vehicles/client/{clientId}": {
+      "get": {
+        "tags": ["Vehicles"],
+        "parameters": [{"name": "clientId", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Veiculos do cliente"}}
+      }
+    },
+    "/services": {
+      "get": {"tags": ["Services"], "responses": {"200": {"description": "Lista de servicos"}}},
+      "post": {
+        "tags": ["Services"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ServiceInput"}}}},
+        "responses": {"201": {"description": "Servico criado"}}
+      }
+    },
+    "/services/{id}": {
+      "get": {"tags": ["Services"], "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Servico"}}},
+      "put": {
+        "tags": ["Services"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ServiceInput"}}}},
+        "responses": {"200": {"description": "Servico atualizado"}}
+      },
+      "delete": {
+        "tags": ["Services"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Servico removido"}
+        }
+      }
+    },
+    "/parts": {
+      "get": {"tags": ["Parts"], "responses": {"200": {"description": "Lista de pecas"}}},
+      "post": {
+        "tags": ["Parts"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PartInput"}}}},
+        "responses": {"201": {"description": "Peca criada"}}
+      }
+    },
+    "/parts/{id}": {
+      "get": {"tags": ["Parts"], "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Peca"}}},
+      "put": {
+        "tags": ["Parts"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PartInput"}}}},
+        "responses": {"200": {"description": "Peca atualizada"}}
+      },
+      "delete": {
+        "tags": ["Parts"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Peca removida"}}
+      }
+    },
+    "/parts/low-stock": {
+      "get": {"tags": ["Parts"], "responses": {"200": {"description": "Pecas com estoque baixo"}}}
+    },
+    "/parts/code/{code}": {
+      "get": {
+        "tags": ["Parts"],
+        "parameters": [{"name": "code", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Peca por codigo"}}
+      }
+    },
+    "/parts/{id}/stock": {
+      "patch": {
+        "tags": ["Parts"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PartStockUpdate"}}}},
+        "responses": {"200": {"description": "Estoque atualizado"}}
+      }
+    },
+    "/service-orders": {
+      "get": {"tags": ["ServiceOrders"], "responses": {"200": {"description": "Lista de OS"}}},
+      "post": {
+        "tags": ["ServiceOrders"],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ServiceOrderCreate"}}}},
+        "responses": {"201": {"description": "OS criada"}}
+      }
+    },
+    "/service-orders/{id}": {
+      "get": {"tags": ["ServiceOrders"], "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "OS"}}
+      }
+    },
+    "/service-orders/{id}/status": {
+      "patch": {
+        "tags": ["ServiceOrders"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/StatusUpdate"}}}},
+        "responses": {"200": {"description": "Status atualizado"}}
+      }
+    },
+    "/service-orders/{id}/approve": {
+      "post": {
+        "tags": ["ServiceOrders"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Orcamento aprovado"}}
+      }
+    },
+    "/service-orders/{id}/reject": {
+      "post": {
+        "tags": ["ServiceOrders"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": false, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RejectQuotation"}}}},
+        "responses": {"200": {"description": "Orcamento rejeitado"}}
+      }
+    },
+    "/service-orders/{id}/services": {
+      "post": {
+        "tags": ["ServiceOrders"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AddServiceItem"}}}},
+        "responses": {"201": {"description": "Servico adicionado"}}
+      }
+    },
+    "/service-orders/{id}/parts": {
+      "post": {
+        "tags": ["ServiceOrders"],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AddPartItem"}}}},
+        "responses": {"201": {"description": "Peca adicionada"}}
+      }
+    },
+    "/service-orders/{id}/services/{serviceId}": {
+      "delete": {
+        "tags": ["ServiceOrders"],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
+          {"name": "serviceId", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {"204": {"description": "Servico removido"}}
+      }
+    },
+    "/service-orders/{id}/parts/{partId}": {
+      "delete": {
+        "tags": ["ServiceOrders"],
+        "parameters": [
+          {"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}},
+          {"name": "partId", "in": "path", "required": true, "schema": {"type": "integer"}}
+        ],
+        "responses": {"204": {"description": "Peca removida"}}
+      }
+    },
+    "/analytics/average-execution-time": {
+      "get": {
+        "tags": ["Analytics"],
+        "responses": {"200": {"description": "Tempo medio de execucao"}}
+      }
+    }
+  }
+}

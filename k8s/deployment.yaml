@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-os-service
+  namespace: tech-challenge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-os-service
+  template:
+    metadata:
+      labels:
+        app: ms-os-service
+    spec:
+      containers:
+        - name: ms-os-service
+          image: ms-os-service:local
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: os-mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: os_service
+            - name: DB_USER
+              value: os_user
+            - name: DB_PASSWORD
+              value: os_pass
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-os-service
+  namespace: tech-challenge
+spec:
+  selector:
+    app: ms-os-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
