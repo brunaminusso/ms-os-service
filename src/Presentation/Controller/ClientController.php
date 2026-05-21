@@ -17,7 +17,8 @@ class ClientController extends BaseController
 {
     public function __construct(
         private ClientRepositoryInterface $clientRepository
-    ) {}
+    ) {
+    }
 
     public function list(Request $request, Response $response): Response
     {

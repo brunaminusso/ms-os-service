@@ -18,7 +18,8 @@ class PartController extends BaseController
     public function __construct(
         private PartRepositoryInterface $partRepository,
         private StockNotificationService $stockNotificationService
-    ) {}
+    ) {
+    }
 
     public function list(Request $request, Response $response): Response
     {

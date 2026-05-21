@@ -9,7 +9,9 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitMqCommandPublisher
 {
-    public function __construct(private AMQPStreamConnection $connection) {}
+    public function __construct(private AMQPStreamConnection $connection)
+    {
+    }
 
     public function publish(string $exchange, string $routingKey, array $payload): void
     {

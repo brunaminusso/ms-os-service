@@ -16,7 +16,8 @@ class ApproveQuotationUseCase
         private ServiceOrderRepositoryInterface $serviceOrderRepository,
         private NotificationService $notificationService,
         private PartReservationService $reservationService
-    ) {}
+    ) {
+    }
 
     public function execute(ServiceOrder $order): ServiceOrder
     {

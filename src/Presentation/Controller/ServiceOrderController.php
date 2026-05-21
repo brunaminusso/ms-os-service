@@ -36,7 +36,8 @@ class ServiceOrderController extends BaseController
         private ValidateStockUseCase $validateStockUseCase,
         private LoggerInterface $logger,
         private MetricsRegistryInterface $metrics
-    ) {}
+    ) {
+    }
 
     public function list(Request $request, Response $response): Response
     {

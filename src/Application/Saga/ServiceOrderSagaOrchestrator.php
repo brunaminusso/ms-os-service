@@ -17,7 +17,8 @@ class ServiceOrderSagaOrchestrator
         private ServiceOrderRepositoryInterface $serviceOrderRepository,
         private NotificationService $notificationService,
         private PartReservationService $reservationService
-    ) {}
+    ) {
+    }
 
     public function requestQuotation(ServiceOrder $order): void
     {
