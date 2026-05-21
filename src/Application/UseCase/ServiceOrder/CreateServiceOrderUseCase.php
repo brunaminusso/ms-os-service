@@ -15,7 +15,8 @@ class CreateServiceOrderUseCase
         private ServiceOrderRepositoryInterface $serviceOrderRepository,
         private NotificationService $notificationService,
         private ServiceOrderSagaOrchestrator $orchestrator
-    ) {}
+    ) {
+    }
 
     public function execute(ServiceOrder $order): ServiceOrder
     {

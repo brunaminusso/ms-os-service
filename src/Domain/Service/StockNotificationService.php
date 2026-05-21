@@ -27,7 +27,6 @@ class StockNotificationService
      * quando ela volta ao estoque
      *
      * @param Part $part Peça que foi reabastecida
-     * @param int $addedQuantity Quantidade adicionada ao estoque
      * @return array Lista de ordens notificadas
      */
     public function notifyPartRestocked(Part $part): array
@@ -54,7 +53,7 @@ class StockNotificationService
                 'order_id' => $order->getId(),
                 'order_number' => $order->getOrderNumber(),
                 'client_name' => $order->getClient()->getName(),
-                'part_name' => $part->getName()
+                'part_name' => $part->getName(),
             ];
         }
 

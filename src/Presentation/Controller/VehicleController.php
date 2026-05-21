@@ -73,8 +73,13 @@ class VehicleController extends BaseController
     {
         $data = $request->getParsedBody();
 
-        if (empty($data['plate']) || empty($data['brand']) || empty($data['model']) || empty($data['year']) || empty($data['client_id'])) {
-            throw new ValidationException('Placa, marca, modelo, ano e cliente são obrigatórios');
+        $requiredFields = ['plate', 'brand', 'model', 'year', 'client_id'];
+        foreach ($requiredFields as $field) {
+            if (empty($data[$field])) {
+                throw new ValidationException(
+                    'Placa, marca, modelo, ano e cliente são obrigatórios'
+                );
+            }
         }
 
         $client = $this->clientRepository->findById((int)$data['client_id']);

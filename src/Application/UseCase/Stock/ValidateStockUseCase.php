@@ -12,7 +12,8 @@ class ValidateStockUseCase
 {
     public function __construct(
         private NotificationService $notificationService
-    ) {}
+    ) {
+    }
 
     public function execute(
         ServiceOrder $order,
