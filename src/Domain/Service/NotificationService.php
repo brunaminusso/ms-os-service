@@ -97,7 +97,8 @@ class NotificationService
             'quotation_reminder',
             'LEMBRETE: Orçamento Aguardando Resposta - ' . $order->getOrderNumber(),
             sprintf(
-                'Seu orçamento de R$ %s ainda está aguardando aprovação. Você tem até 24 horas para responder antes do cancelamento automático.',
+                'Seu orçamento de R$ %s ainda está aguardando aprovação. '
+                . 'Você tem até 24 horas para responder antes do cancelamento automático.',
                 $order->getQuotationTotal()?->getFormatted()
             ),
             $order
@@ -181,8 +182,12 @@ class NotificationService
         $this->notificationRepository->save($notification);
     }
 
-    public function notifyPartBackInStock(Client $client, string $partName, int $availableQuantity, ?ServiceOrder $order = null): void
-    {
+    public function notifyPartBackInStock(
+        Client $client,
+        string $partName,
+        int $availableQuantity,
+        ?ServiceOrder $order = null
+    ): void {
         $notification = new Notification(
             $client,
             'email',

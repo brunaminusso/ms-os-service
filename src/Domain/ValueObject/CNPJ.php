@@ -28,7 +28,8 @@ final class CNPJ
     private function isValid(string $cnpj, ?string &$errorMessage = null): bool
     {
         if (strlen($cnpj) !== 14) {
-            $errorMessage = "CNPJ deve conter exatamente 14 dígitos. Formato esperado: XX.XXX.XXX/XXXX-XX ou apenas números.";
+            $errorMessage = 'CNPJ deve conter exatamente 14 dígitos. '
+                . 'Formato esperado: XX.XXX.XXX/XXXX-XX ou apenas números.';
             return false;
         }
 

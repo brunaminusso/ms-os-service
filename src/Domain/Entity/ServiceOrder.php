@@ -40,13 +40,28 @@ class ServiceOrder
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $diagnosticNotes = null;
 
-    #[ORM\OneToMany(targetEntity: ServiceOrderService::class, mappedBy: 'serviceOrder', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(
+        targetEntity: ServiceOrderService::class,
+        mappedBy: 'serviceOrder',
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true,
+    )]
     private Collection $services;
 
-    #[ORM\OneToMany(targetEntity: ServiceOrderPart::class, mappedBy: 'serviceOrder', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(
+        targetEntity: ServiceOrderPart::class,
+        mappedBy: 'serviceOrder',
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true,
+    )]
     private Collection $parts;
 
-    #[ORM\OneToMany(targetEntity: ServiceOrderStatusHistory::class, mappedBy: 'serviceOrder', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OneToMany(
+        targetEntity: ServiceOrderStatusHistory::class,
+        mappedBy: 'serviceOrder',
+        cascade: ['persist'],
+        orphanRemoval: true,
+    )]
     #[ORM\OrderBy(['changedAt' => 'ASC'])]
     private Collection $statusHistory;
 

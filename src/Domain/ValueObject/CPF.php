@@ -28,7 +28,8 @@ final class CPF
     private function isValid(string $cpf, ?string &$errorMessage = null): bool
     {
         if (strlen($cpf) !== 11) {
-            $errorMessage = "CPF deve conter exatamente 11 dígitos. Formato esperado: XXX.XXX.XXX-XX ou apenas números.";
+            $errorMessage = 'CPF deve conter exatamente 11 dígitos. '
+                . 'Formato esperado: XXX.XXX.XXX-XX ou apenas números.';
             return false;
         }
 

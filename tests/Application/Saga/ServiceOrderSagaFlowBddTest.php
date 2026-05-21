@@ -68,7 +68,10 @@ class ServiceOrderSagaFlowBddTest extends TestCase
 
         $this->reservationService->expects($this->once())->method('createReservationsForOrder')->with($order);
         $this->notificationService->expects($this->once())->method('notifyQuotationCreated')->with($order);
-        $this->notificationService->expects($this->exactly(3))->method('notifyStatusChanged')->with($order, $this->anything());
+        $this->notificationService
+            ->expects($this->exactly(3))
+            ->method('notifyStatusChanged')
+            ->with($order, $this->anything());
         $this->repository->expects($this->exactly(3))->method('save')->with($order);
 
         $orchestrator = new ServiceOrderSagaOrchestrator(
