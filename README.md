@@ -1,6 +1,6 @@
 # OS Service
 
-[![Coverage](https://img.shields.io/github/actions/workflow/status/brunaminusso/tech-challenge/tests.yml?branch=main&label=coverage)](https://github.com/brunaminusso/tech-challenge/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/github/actions/workflow/status/brunaminusso/ms-os-service/tests.yml?branch=main&label=coverage)](https://github.com/brunaminusso/ms-os-service/actions/workflows/tests.yml)
 
 Servico responsavel por gerenciar ordens de servico (OS) e os cadastros base
 (clientes, veiculos, servicos e pecas), mantendo o limite de 3 microsservicos.
@@ -31,6 +31,12 @@ composer seed
 
 - Workflow: https://github.com/brunaminusso/tech-challenge/actions/workflows/tests.yml
 - Gate: `composer coverage:check`
+
+## CI / Sonar
+
+- O workflow de CI executa build, testes, análise estática e um scan SonarQube opcional.
+- Para habilitar o Sonar no CI, defina os secrets do repositório: `SONAR_HOST_URL` e `SONAR_TOKEN`.
+- O workflow só executa o step do Sonar quando ambos os secrets estiverem presentes.
 
 ## Teste BDD
 
