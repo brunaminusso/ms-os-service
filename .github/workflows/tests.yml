@@ -10,8 +10,9 @@ jobs:
   build-test-quality:
     runs-on: ubuntu-latest
     env:
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+      MS_SONAR_TOKEN: ${{ secrets.MS_SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION || secrets.MS_SONAR_ORGANIZATION || github.repository_owner }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,8 +39,13 @@ jobs:
         run: composer coverage:check
 
       - name: SonarQube scan
-        if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' }}
+        if: ${{ env.MS_SONAR_TOKEN != '' }}
         uses: sonarsource/sonarqube-scan-action@v2
+        with:
+          args: >
+            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
+            -Dsonar.token=${{ env.MS_SONAR_TOKEN }}
+            -Dsonar.php.coverage.reportPaths=build/coverage.xml
 
       - name: Build image
         run: docker build -t ms-os-service:local .
