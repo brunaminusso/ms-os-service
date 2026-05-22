@@ -31,7 +31,7 @@ final class NotificationServiceTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testNotifyPartBackInStockWithAndWithoutOrder(): void
+    public function testNotifyPartBackInStockWithoutOrder(): void
     {
         $repo = $this->createMock(NotificationRepositoryInterface::class);
         $repo->expects($this->exactly(2))->method('save');
@@ -40,7 +40,16 @@ final class NotificationServiceTest extends TestCase
 
         $client = new Client('Cliente Y');
         $service->notifyPartBackInStock($client, 'Filtro', 5, null);
+    }
 
+    public function testNotifyPartBackInStockWithOrder(): void
+    {
+        $repo = $this->createMock(NotificationRepositoryInterface::class);
+        $repo->expects($this->exactly(2))->method('save');
+
+        $service = new NotificationService($repo);
+
+        $client = new Client('Cliente Z');
         $plate = new VehiclePlate('ABC1234');
         $vehicle = new Vehicle($plate, 'Brand', 'Model', 2020, $client);
         $order = new ServiceOrder('ORD-11', $client, $vehicle);
