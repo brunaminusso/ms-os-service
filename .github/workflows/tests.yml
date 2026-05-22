@@ -53,11 +53,7 @@ jobs:
         run: git fetch --prune --unshallow || true
 
       - name: SonarQube scan
-<<<<<<< HEAD
         if: ${{ env.HAS_MS_SONAR_TOKEN == 'true' }}
-=======
-        if: ${{ env.MS_SONAR_TOKEN != '' }}
->>>>>>> origin/main
         uses: sonarsource/sonarqube-scan-action@v2
         with:
           args: >
