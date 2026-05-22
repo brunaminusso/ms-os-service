@@ -38,21 +38,13 @@ jobs:
       - name: Coverage gate
         run: composer coverage:check
 
-      - name: Prepare Sonar gate
-        run: |
-          if [ -n "${MS_SONAR_TOKEN:-}" ]; then
-            echo "HAS_MS_SONAR_TOKEN=true" >> "$GITHUB_ENV"
-          else
-            echo "HAS_MS_SONAR_TOKEN=false" >> "$GITHUB_ENV"
-          fi
-
       - name: SonarQube scan
-        if: ${{ env.HAS_MS_SONAR_TOKEN == 'true' }}
+        if: ${{ secrets.MS_SONAR_TOKEN != '' }}
         uses: sonarsource/sonarqube-scan-action@v2
         with:
           args: >
             -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
-            -Dsonar.token=${{ env.MS_SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.MS_SONAR_TOKEN }}
 
       - name: Build image
         run: docker build -t ms-os-service:local .
