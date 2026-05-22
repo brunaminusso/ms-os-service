@@ -38,6 +38,13 @@ jobs:
       - name: Coverage gate
         run: composer coverage:check
 
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: build/coverage.xml
+
       - name: SonarQube scan
         if: ${{ env.MS_SONAR_TOKEN != '' }}
         uses: sonarsource/sonarqube-scan-action@v2
