@@ -39,12 +39,12 @@ jobs:
         run: composer coverage:check
 
       - name: SonarQube scan
-        if: ${{ secrets.MS_SONAR_TOKEN != '' }}
+        if: ${{ env.MS_SONAR_TOKEN != '' }}
         uses: sonarsource/sonarqube-scan-action@v2
         with:
           args: >
             -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
-            -Dsonar.token=${{ secrets.MS_SONAR_TOKEN }}
+            -Dsonar.token=${{ env.MS_SONAR_TOKEN }}
 
       - name: Build image
         run: docker build -t ms-os-service:local .
