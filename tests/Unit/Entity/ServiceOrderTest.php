@@ -43,6 +43,8 @@ final class ServiceOrderTest extends TestCase
         $order = new ServiceOrder('ORD-2', $client, $vehicle);
         $this->assertNull($order->getQuotationSentAt());
 
+        // transition to IN_DIAGNOSTIC first, then sendQuotation (which moves to AWAITING_APPROVAL)
+        $order->changeStatus(OrderStatus::IN_DIAGNOSTIC);
         $order->sendQuotation();
         $this->assertNotNull($order->getQuotationSentAt());
         $this->assertSame(OrderStatus::AWAITING_APPROVAL, $order->getStatus());
