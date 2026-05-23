@@ -39,47 +39,6 @@ final class ClientControllerTest extends TestCase
         $this->assertSame(2, $body['page']);
         $this->assertSame('Cliente A', $body['data'][0]['name']);
     }
-<?php
-
-declare(strict_types=1);
-
-namespace Tests\Unit\Presentation\Controller;
-
-use App\Domain\Entity\Client;
-use App\Domain\Repository\ClientRepositoryInterface;
-use App\Domain\ValueObject\CPF;
-use App\Domain\ValueObject\CNPJ;
-use App\Infrastructure\Exception\NotFoundException;
-use App\Infrastructure\Exception\ValidationException;
-use App\Presentation\Controller\ClientController;
-use PHPUnit\Framework\TestCase;
-use Slim\Psr7\Factory\ServerRequestFactory;
-use Slim\Psr7\Response;
-
-final class ClientControllerTest extends TestCase
-{
-    public function testListReturnsPaginatedClients(): void
-    {
-        $client = $this->createClient();
-
-        $clientRepository = $this->createMock(ClientRepositoryInterface::class);
-        $clientRepository->expects($this->once())
-            ->method('findAll')
-            ->with(2, 10)
-            ->willReturn([$client]);
-
-        $controller = $this->createController($clientRepository);
-
-        $request = (new ServerRequestFactory())->createServerRequest('GET', '/clients')
-            ->withQueryParams(['page' => 2, 'limit' => 10]);
-
-        $response = new Response();
-        $result = $controller->list($request, $response);
-
-        $body = json_decode((string)$result->getBody(), true);
-        $this->assertSame(2, $body['page']);
-        $this->assertSame('Cliente A', $body['data'][0]['name']);
-    }
 
     public function testGetReturnsClient(): void
     {
