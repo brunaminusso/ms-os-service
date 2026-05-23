@@ -40,27 +40,25 @@ class ServiceOrder
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $diagnosticNotes = null;
 
+    /**
+     * @var Collection<int, ServiceOrderService>
+     */
     #[ORM\OneToMany(
         targetEntity: ServiceOrderService::class,
         mappedBy: 'serviceOrder',
         cascade: ['persist', 'remove'],
         orphanRemoval: true,
     )]
-    /**
-     * @var Collection<int, ServiceOrderService>
-     */
-    )]
     private Collection $services;
 
+    /**
+     * @var Collection<int, ServiceOrderPart>
+     */
     #[ORM\OneToMany(
         targetEntity: ServiceOrderPart::class,
         mappedBy: 'serviceOrder',
         cascade: ['persist', 'remove'],
         orphanRemoval: true,
-    )]
-    /**
-     * @var Collection<int, ServiceOrderPart>
-     */
     )]
     private Collection $parts;
 

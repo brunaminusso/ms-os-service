@@ -86,6 +86,7 @@ final class ServiceOrderRepositoryTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->once())->method('persist')->with($order);
         $em->expects($this->once())->method('flush');
+        $em->method('getRepository')->willReturn($this->createMock(EntityRepository::class));
 
         $repository = new ServiceOrderRepository($em);
         $repository->save($order);
@@ -93,6 +94,7 @@ final class ServiceOrderRepositoryTest extends TestCase
         $em2 = $this->createMock(EntityManagerInterface::class);
         $em2->expects($this->once())->method('remove')->with($order);
         $em2->expects($this->once())->method('flush');
+        $em2->method('getRepository')->willReturn($this->createMock(EntityRepository::class));
 
         $repository2 = new ServiceOrderRepository($em2);
         $repository2->delete($order);
