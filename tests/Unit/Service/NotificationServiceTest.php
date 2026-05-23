@@ -6,14 +6,26 @@ namespace Tests\Unit\Service;
 
 use App\Domain\Entity\Client;
 use App\Domain\Entity\ServiceOrder;
+use App\Domain\Entity\Vehicle;
+use App\Domain\ValueObject\Money;
+use App\Domain\ValueObject\VehiclePlate;
 use App\Domain\Service\NotificationService;
 use App\Domain\Repository\NotificationRepositoryInterface;
-use App\Domain\ValueObject\VehiclePlate;
-use App\Domain\Entity\Vehicle;
 use PHPUnit\Framework\TestCase;
 
-final class NotificationServiceTest extends TestCase
+class NotificationServiceTest extends TestCase
 {
+    public function testNotifyPartBackInStockSavesNotification(): void
+    {
+        $repo = $this->createMock(NotificationRepositoryInterface::class);
+        $repo->expects($this->exactly(2))->method('save');
+
+        $service = new NotificationService($repo);
+
+        $client = new Client('Cliente A');
+        $service->notifyPartBackInStock($client, 'Filtro', 3, null);
+    }
+
     public function testNotifyServiceOrderCreatedSavesNotificationTwice(): void
     {
         $repo = $this->createMock(NotificationRepositoryInterface::class);
@@ -21,39 +33,47 @@ final class NotificationServiceTest extends TestCase
 
         $service = new NotificationService($repo);
 
-        $client = new Client('Cliente X');
-        $plate = new VehiclePlate('ABC1234');
-        $vehicle = new Vehicle($plate, 'Brand', 'Model', 2020, $client);
-        $order = new ServiceOrder('ORD-10', $client, $vehicle);
+        $client = new Client('Cliente B');
+        $vehicle = new Vehicle(new VehiclePlate('XYZ-9999'), 'Make', 'Model', 2021, $client);
+        $order = new ServiceOrder('ORD-1', $client, $vehicle);
 
         $service->notifyServiceOrderCreated($order);
-        // expectations on mock will validate save called twice
-        $this->assertTrue(true);
     }
 
-    public function testNotifyPartBackInStockWithoutOrder(): void
+    public function testNotifyStatusChangedUsesMessages(): void
     {
         $repo = $this->createMock(NotificationRepositoryInterface::class);
         $repo->expects($this->exactly(2))->method('save');
 
         $service = new NotificationService($repo);
 
-        $client = new Client('Cliente Y');
-        $service->notifyPartBackInStock($client, 'Filtro', 5, null);
+        $client = new Client('Cliente C');
+        $vehicle = new Vehicle(new VehiclePlate('ZZZ-0000'), 'Make', 'Model', 2022, $client);
+        $order = new ServiceOrder('ORD-2', $client, $vehicle);
+
+        $service->notifyStatusChanged($order, 'received');
     }
 
-    public function testNotifyPartBackInStockWithOrder(): void
+    public function testAllNotificationsCallSaveTwice(): void
     {
         $repo = $this->createMock(NotificationRepositoryInterface::class);
-        $repo->expects($this->exactly(2))->method('save');
+        // 9 notification methods * 2 saves each = 18
+        $repo->expects($this->exactly(18))->method('save');
 
         $service = new NotificationService($repo);
 
-        $client = new Client('Cliente Z');
-        $plate = new VehiclePlate('ABC1234');
-        $vehicle = new Vehicle($plate, 'Brand', 'Model', 2020, $client);
-        $order = new ServiceOrder('ORD-11', $client, $vehicle);
+        $client = new Client('Cliente Full');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Make', 'Model', 2021, $client);
+        $order = new ServiceOrder('FULL-1', $client, $vehicle);
 
-        $service->notifyPartBackInStock($client, 'Filtro', 2, $order);
+        $service->notifyServiceOrderCreated($order);
+        $service->notifyStatusChanged($order, 'received');
+        $service->notifyQuotationCreated($order);
+        $service->notifyQuotationReminder($order);
+        $service->notifyQuotationApproved($order);
+        $service->notifyQuotationRejected($order);
+        $service->notifyOrderCancelled($order, 'motivo');
+        $service->notifyPartUnavailable($order, 'Peça A');
+        $service->notifyPartBackInStock($client, 'Peça A', 5, $order);
     }
 }

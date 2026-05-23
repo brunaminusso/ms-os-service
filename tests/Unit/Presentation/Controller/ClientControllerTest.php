@@ -114,6 +114,7 @@ final class ClientControllerTest extends TestCase
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame(201, $result->getStatusCode());
+        $this->assertSame('Cliente CNPJ', $body['name']);
         $this->assertSame('11.222.333/0001-81', $body['cnpj']);
     }
 

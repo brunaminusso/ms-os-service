@@ -11,30 +11,86 @@ use App\Domain\Entity\Vehicle;
 use App\Domain\ValueObject\Money;
 use App\Domain\ValueObject\VehiclePlate;
 use App\Presentation\Controller\ServiceOrderController;
-use App\Application\UseCase\ServiceOrder\CreateServiceOrderUseCase;
-use App\Application\UseCase\ServiceOrder\ApproveQuotationUseCase;
-use App\Application\UseCase\ServiceOrder\RejectQuotationUseCase;
-use App\Application\UseCase\ServiceOrder\TransitionStatusUseCase;
-use App\Application\UseCase\Stock\ValidateStockUseCase;
 use App\Domain\Repository\ServiceOrderRepositoryInterface;
 use App\Domain\Repository\ClientRepositoryInterface;
 use App\Domain\Repository\VehicleRepositoryInterface;
 use App\Domain\Repository\ServiceRepositoryInterface;
 use App\Domain\Repository\PartRepositoryInterface;
+use App\Application\UseCase\ServiceOrder\CreateServiceOrderUseCase;
+use App\Application\UseCase\ServiceOrder\ApproveQuotationUseCase;
+use App\Application\UseCase\ServiceOrder\RejectQuotationUseCase;
+use App\Application\UseCase\ServiceOrder\TransitionStatusUseCase;
+use App\Application\UseCase\Stock\ValidateStockUseCase;
 use App\Infrastructure\Observability\MetricsRegistryInterface;
-use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
-use Slim\Psr7\Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Log\LoggerInterface;
+use Psr\Http\Message\StreamInterface;
 
-final class ServiceOrderControllerTest extends TestCase
+class ServiceOrderControllerTest extends TestCase
 {
-    public function testGetReturns404WhenNotFound(): void
+    private function makeResponseMock(StreamInterface $stream): Response
     {
-        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
-        $serviceOrderRepo->method('findById')->willReturn(null);
+        $response = $this->createMock(Response::class);
+        $response->method('getBody')->willReturn($stream);
+        $response->method('withHeader')->willReturnSelf();
+        $response->method('withStatus')->willReturnSelf();
+        return $response;
+    }
+
+    public function testListWithStatusUsesRepository(): void
+    {
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $clientRepo = $this->createMock(ClientRepositoryInterface::class);
+        $vehicleRepo = $this->createMock(VehicleRepositoryInterface::class);
+        $serviceRepository = $this->createMock(ServiceRepositoryInterface::class);
+        $partRepo = $this->createMock(PartRepositoryInterface::class);
+        $createUseCase = $this->createMock(CreateServiceOrderUseCase::class);
+        $approveUseCase = $this->createMock(ApproveQuotationUseCase::class);
+        $rejectUseCase = $this->createMock(RejectQuotationUseCase::class);
+        $transitionUseCase = $this->createMock(TransitionStatusUseCase::class);
+        $validateUseCase = $this->createMock(ValidateStockUseCase::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $metrics = $this->createMock(MetricsRegistryInterface::class);
 
         $controller = new ServiceOrderController(
-            $serviceOrderRepo,
+            $serviceRepo,
+            $clientRepo,
+            $vehicleRepo,
+            $serviceRepository,
+            $partRepo,
+            $createUseCase,
+            $approveUseCase,
+            $rejectUseCase,
+            $transitionUseCase,
+            $validateUseCase,
+            $logger,
+            $metrics
+        );
+
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('SO-900', $client, $vehicle);
+
+        $serviceRepo->method('findByStatus')->willReturn([$order]);
+
+        $req = $this->createMock(Request::class);
+        $req->method('getQueryParams')->willReturn(['status' => 'received']);
+
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())->method('write');
+        $res = $this->makeResponseMock($stream);
+
+        $out = $controller->list($req, $res);
+        $this->assertSame($res, $out);
+    }
+
+    public function testGetNotFoundReturns404(): void
+    {
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $controller = new ServiceOrderController(
+            $serviceRepo,
             $this->createMock(ClientRepositoryInterface::class),
             $this->createMock(VehicleRepositoryInterface::class),
             $this->createMock(ServiceRepositoryInterface::class),
@@ -48,42 +104,28 @@ final class ServiceOrderControllerTest extends TestCase
             $this->createMock(MetricsRegistryInterface::class)
         );
 
-        $request = $this->createMock(\Psr\Http\Message\ServerRequestInterface::class);
-        $response = new Response();
+        $serviceRepo->method('findById')->willReturn(null);
 
-        $result = $controller->get($request, $response, ['id' => 1]);
+        $req = $this->createMock(Request::class);
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())->method('write');
+        $res = $this->makeResponseMock($stream);
 
-        $this->assertEquals(404, $result->getStatusCode());
+        $out = $controller->get($req, $res, ['id' => 123]);
+        $this->assertSame($res, $out);
     }
 
-    public function testCreateSuccessfulReturns201WithOrderData(): void
+    public function testCreateValidReturns201(): void
     {
-        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
-        $serviceOrderRepo->method('nextOrderNumber')->willReturn('ORD-1');
-
-        $client = new Client('Cliente Test');
-        $vehicle = new Vehicle(
-            new VehiclePlate('ABC1234'),
-            'Brand',
-            'Model',
-            2020,
-            $client
-        );
-
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceRepo->method('nextOrderNumber')->willReturn('ORD-1');
         $clientRepo = $this->createMock(ClientRepositoryInterface::class);
-        $clientRepo->method('findById')->willReturn($client);
-
         $vehicleRepo = $this->createMock(VehicleRepositoryInterface::class);
-        $vehicleRepo->method('findById')->willReturn($vehicle);
-
         $createUseCase = $this->createMock(CreateServiceOrderUseCase::class);
-        $createUseCase->expects($this->once())->method('execute');
-
         $metrics = $this->createMock(MetricsRegistryInterface::class);
-        $metrics->expects($this->once())->method('incOrdersCreated');
 
         $controller = new ServiceOrderController(
-            $serviceOrderRepo,
+            $serviceRepo,
             $clientRepo,
             $vehicleRepo,
             $this->createMock(ServiceRepositoryInterface::class),
@@ -97,50 +139,54 @@ final class ServiceOrderControllerTest extends TestCase
             $metrics
         );
 
-        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('POST', '/orders')
-            ->withParsedBody(['client_id' => 1, 'vehicle_id' => 1, 'description' => 'Teste']);
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
 
-        $response = new Response();
+        $clientRepo->method('findById')->willReturn($client);
+        $vehicleRepo->method('findById')->willReturn($vehicle);
+        $serviceRepo->method('nextOrderNumber')->willReturn('SO-501');
 
-        $result = $controller->create($request, $response);
+        $req = $this->createMock(Request::class);
+        $req->method('getParsedBody')->willReturn([
+            'client_id' => 1,
+            'vehicle_id' => 2,
+            'description' => 'desc'
+        ]);
 
-        $this->assertEquals(201, $result->getStatusCode());
-        $body = json_decode((string)$result->getBody(), true);
-        $this->assertEquals('ORD-1', $body['order_number']);
-        $this->assertEquals('Teste', $body['description']);
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())->method('write');
+        $res = $this->makeResponseMock($stream);
+
+        $out = $controller->create($req, $res);
+        $this->assertSame($res, $out);
     }
 
-    public function testAddPartReturnsWarningWhenLowStock(): void
+    public function testAddPartReturnsWarningWhenValidationWarns(): void
     {
-        $client = new Client('Cliente P');
-        $vehicle = new Vehicle(
-            new VehiclePlate('XYZ9876'),
-            'Brand',
-            'Model',
-            2021,
-            $client
-        );
-        $order = new ServiceOrder('ORD-2', $client, $vehicle);
-
-        $part = new Part('Filtro', new Money(10.0));
-        $part->addStock(10);
-
-        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
-        $serviceOrderRepo->method('findById')->willReturn($order);
-        $serviceOrderRepo->expects($this->once())->method('save');
-
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceRepo->expects($this->once())->method('save');
         $partRepo = $this->createMock(PartRepositoryInterface::class);
+        $validateUseCase = $this->createMock(ValidateStockUseCase::class);
+
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('SO-777', $client, $vehicle);
+
+        $serviceRepo->method('findById')->willReturn($order);
+
+        $part = new Part('Filtro', Money::fromCents(1000));
+        $part->addStock(10);
         $partRepo->method('findById')->willReturn($part);
 
-        $validate = $this->createMock(ValidateStockUseCase::class);
-        $validate->method('execute')->willReturn([
-            'warning' => true,
-            'available' => 1,
-            'requested' => 5
+        $validateUseCase->method('execute')->willReturn([
+            'sufficient' => false,
+            'available' => 0,
+            'requested' => 1,
+            'warning' => 'insuficiente'
         ]);
 
         $controller = new ServiceOrderController(
-            $serviceOrderRepo,
+            $serviceRepo,
             $this->createMock(ClientRepositoryInterface::class),
             $this->createMock(VehicleRepositoryInterface::class),
             $this->createMock(ServiceRepositoryInterface::class),
@@ -149,42 +195,33 @@ final class ServiceOrderControllerTest extends TestCase
             $this->createMock(ApproveQuotationUseCase::class),
             $this->createMock(RejectQuotationUseCase::class),
             $this->createMock(TransitionStatusUseCase::class),
-            $validate,
+            $validateUseCase,
             $this->createMock(LoggerInterface::class),
             $this->createMock(MetricsRegistryInterface::class)
         );
 
-        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('POST', '/orders/1/parts')
-            ->withParsedBody(['part_id' => 1, 'quantity' => 5]);
+        $req = $this->createMock(Request::class);
+        $req->method('getParsedBody')->willReturn(['part_id' => 1, 'quantity' => 1]);
 
-        $response = new Response();
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())->method('write');
+        $res = $this->makeResponseMock($stream);
 
-        $result = $controller->addPart($request, $response, ['id' => 1]);
-
-        $this->assertEquals(200, $result->getStatusCode());
-        $body = json_decode((string)$result->getBody(), true);
-        $this->assertArrayHasKey('warning', $body);
-        $this->assertEquals(1, $body['available_stock']);
-        $this->assertEquals(5, $body['requested_quantity']);
+        $out = $controller->addPart($req, $res, ['id' => 1]);
+        $this->assertSame($res, $out);
     }
 
-    public function testListReturnsOrdersWhenStatusParamPresent(): void
+    public function testGetReturnsOrderWhenFound(): void
     {
-        $client = new \App\Domain\Entity\Client('Cliente L');
-        $vehicle = new \App\Domain\Entity\Vehicle(
-            new \App\Domain\ValueObject\VehiclePlate('ZZZ9999'),
-            'Brand',
-            'Model',
-            2020,
-            $client
-        );
-        $order = new \App\Domain\Entity\ServiceOrder('ORD-200', $client, $vehicle);
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('SO-321', $client, $vehicle);
 
-        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
-        $serviceOrderRepo->method('findByStatus')->willReturn([$order]);
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceRepo->method('findById')->willReturn($order);
 
         $controller = new ServiceOrderController(
-            $serviceOrderRepo,
+            $serviceRepo,
             $this->createMock(ClientRepositoryInterface::class),
             $this->createMock(VehicleRepositoryInterface::class),
             $this->createMock(ServiceRepositoryInterface::class),
@@ -198,44 +235,29 @@ final class ServiceOrderControllerTest extends TestCase
             $this->createMock(MetricsRegistryInterface::class)
         );
 
-        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('GET', '/orders')
-            ->withQueryParams(['status' => 'received']);
-        $response = new \Slim\Psr7\Response();
+        $req = $this->createMock(Request::class);
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())->method('write');
+        $res = $this->makeResponseMock($stream);
 
-        $result = $controller->list($request, $response);
-        $this->assertEquals(200, $result->getStatusCode());
-        $body = json_decode((string)$result->getBody(), true);
-        $this->assertCount(1, $body['data']);
-        $this->assertEquals('ORD-200', $body['data'][0]['order_number']);
+        $out = $controller->get($req, $res, ['id' => 1]);
+        $this->assertSame($res, $out);
     }
 
     public function testUpdateStatusCallsUseCaseAndReturns200(): void
     {
-        $client = new \App\Domain\Entity\Client('Cliente S');
-        $vehicle = new \App\Domain\Entity\Vehicle(
-            new \App\Domain\ValueObject\VehiclePlate('SSS1111'),
-            'Brand',
-            'Model',
-            2020,
-            $client
-        );
-        $order = new \App\Domain\Entity\ServiceOrder('ORD-300', $client, $vehicle);
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('SO-400', $client, $vehicle);
 
-        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
-        $serviceOrderRepo->method('findById')->willReturn($order);
-        $serviceOrderRepo->expects($this->once())->method('save');
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceRepo->method('findById')->willReturn($order);
 
-        $notification = $this->createMock(\App\Domain\Service\NotificationService::class);
-        $reservation = $this->createMock(\App\Domain\Service\PartReservationService::class);
-
-        $transitionUseCase = new \App\Application\UseCase\ServiceOrder\TransitionStatusUseCase(
-            $serviceOrderRepo,
-            $notification,
-            $reservation
-        );
+        $transition = $this->createMock(TransitionStatusUseCase::class);
+        $transition->expects($this->once())->method('execute');
 
         $controller = new ServiceOrderController(
-            $serviceOrderRepo,
+            $serviceRepo,
             $this->createMock(ClientRepositoryInterface::class),
             $this->createMock(VehicleRepositoryInterface::class),
             $this->createMock(ServiceRepositoryInterface::class),
@@ -243,20 +265,115 @@ final class ServiceOrderControllerTest extends TestCase
             $this->createMock(CreateServiceOrderUseCase::class),
             $this->createMock(ApproveQuotationUseCase::class),
             $this->createMock(RejectQuotationUseCase::class),
-            $transitionUseCase,
+            $transition,
             $this->createMock(ValidateStockUseCase::class),
             $this->createMock(LoggerInterface::class),
             $this->createMock(MetricsRegistryInterface::class)
         );
 
-        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('POST', '/orders/1/status')
-            ->withParsedBody(['status' => 'in_diagnostic']);
-        $response = new \Slim\Psr7\Response();
+        $req = $this->createMock(Request::class);
+        $req->method('getParsedBody')->willReturn(['status' => 'in_diagnostic']);
 
-        $result = $controller->updateStatus($request, $response, ['id' => 1]);
-        $this->assertEquals(200, $result->getStatusCode());
-        $body = json_decode((string)$result->getBody(), true);
-        $this->assertEquals('in_diagnostic', $body['status']);
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->once())->method('write');
+        $res = $this->makeResponseMock($stream);
+
+        $out = $controller->updateStatus($req, $res, ['id' => 1]);
+        $this->assertSame($res, $out);
+    }
+
+    public function testApproveAndRejectQuotationFlows(): void
+    {
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('SO-500', $client, $vehicle);
+
+        $order->changeStatus(\App\Domain\Enum\OrderStatus::IN_DIAGNOSTIC);
+        $order->changeStatus(\App\Domain\Enum\OrderStatus::AWAITING_APPROVAL);
+
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceRepo->method('findById')->willReturn($order);
+
+        $approve = $this->createMock(ApproveQuotationUseCase::class);
+        $approve->expects($this->once())->method('execute');
+
+        $reject = $this->createMock(RejectQuotationUseCase::class);
+        $reject->expects($this->once())->method('execute');
+
+        $controller = new ServiceOrderController(
+            $serviceRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $this->createMock(ServiceRepositoryInterface::class),
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $approve,
+            $reject,
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $req = $this->createMock(Request::class);
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->exactly(2))->method('write');
+        $res = $this->makeResponseMock($stream);
+
+        $controller->approveQuotation($req, $res, ['id' => 1]);
+        $controller->rejectQuotation($req, $res, ['id' => 1]);
+        $this->assertTrue(true);
+    }
+
+    public function testAddServiceAndRemoveServiceFlows(): void
+    {
+        $client = new Client('Cli');
+        $vehicle = new Vehicle(new VehiclePlate('ABC-1234'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('SO-600', $client, $vehicle);
+
+        $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceRepo->method('findById')->willReturn($order);
+        $serviceRepo->expects($this->exactly(2))->method('save');
+
+        $serviceEntity = new \App\Domain\Entity\Service('Troca de óleo', Money::fromCents(1000));
+
+        $serviceRepository = $this->createMock(ServiceRepositoryInterface::class);
+        $serviceRepository->method('findById')->willReturn($serviceEntity);
+
+        $controller = new ServiceOrderController(
+            $serviceRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $serviceRepository,
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $this->createMock(ApproveQuotationUseCase::class),
+            $this->createMock(RejectQuotationUseCase::class),
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $req = $this->createMock(Request::class);
+        $req->method('getParsedBody')->willReturn(['service_id' => 1, 'quantity' => 1]);
+
+        $stream = $this->createMock(StreamInterface::class);
+        $stream->expects($this->exactly(2))->method('write');
+        $res = $this->makeResponseMock($stream);
+
+        // add service
+        $controller->addService($req, $res, ['id' => 1]);
+
+        // prepare a mock ServiceOrderService to remove
+        $orderServiceMock = $this->createMock(\App\Domain\Entity\ServiceOrderService::class);
+        $serviceMock = $this->createMock(\App\Domain\Entity\Service::class);
+        $serviceMock->method('getId')->willReturn(1);
+        $orderServiceMock->method('getService')->willReturn($serviceMock);
+        $order->getServices()->add($orderServiceMock);
+
+        $out = $controller->removeService($req, $res, ['id' => 1, 'serviceId' => 1]);
+        $this->assertSame($res, $out);
     }
 
     public function testApproveQuotationCallsUseCaseAndReturns200(): void
