@@ -307,4 +307,107 @@ final class ServiceOrderControllerTest extends TestCase
         $body = json_decode((string)$result->getBody(), true);
         $this->assertTrue($body['quotation_approved']);
     }
+
+    public function testAddServiceSuccessfulReturns200(): void
+    {
+        $client = new Client('Cliente B');
+        $vehicle = new Vehicle(new VehiclePlate('BBB2222'), 'Brand', 'Model', 2021, $client);
+        $order = new ServiceOrder('ORD-500', $client, $vehicle);
+
+        $service = new \App\Domain\Entity\Service('Troca óleo', new Money(30.0));
+
+        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceOrderRepo->method('findById')->willReturn($order);
+        $serviceOrderRepo->expects($this->once())->method('save');
+
+        $serviceRepo = $this->createMock(ServiceRepositoryInterface::class);
+        $serviceRepo->method('findById')->willReturn($service);
+
+        $controller = new ServiceOrderController(
+            $serviceOrderRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $serviceRepo,
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $this->createMock(ApproveQuotationUseCase::class),
+            $this->createMock(RejectQuotationUseCase::class),
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('POST', '/orders/1/services')
+            ->withParsedBody(['service_id' => 1, 'quantity' => 1]);
+
+        $response = new \Slim\Psr7\Response();
+
+        $result = $controller->addService($request, $response, ['id' => 1]);
+        $this->assertEquals(200, $result->getStatusCode());
+        $body = json_decode((string)$result->getBody(), true);
+        $this->assertEquals('ORD-500', $body['order_number']);
+    }
+
+    public function testRemoveServiceReturns404WhenNotFoundInOrder(): void
+    {
+        $client = new Client('Cliente C');
+        $vehicle = new Vehicle(new VehiclePlate('CCC3333'), 'Brand', 'Model', 2020, $client);
+        $order = new ServiceOrder('ORD-600', $client, $vehicle);
+
+        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceOrderRepo->method('findById')->willReturn($order);
+
+        $controller = new ServiceOrderController(
+            $serviceOrderRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $this->createMock(ServiceRepositoryInterface::class),
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $this->createMock(ApproveQuotationUseCase::class),
+            $this->createMock(RejectQuotationUseCase::class),
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $request = $this->createMock(\Psr\Http\Message\ServerRequestInterface::class);
+        $response = new \Slim\Psr7\Response();
+
+        $result = $controller->removeService($request, $response, ['id' => 1, 'serviceId' => 999]);
+        $this->assertEquals(404, $result->getStatusCode());
+    }
+
+    public function testGetAverageExecutionTimeReturnsData(): void
+    {
+        $stats = [['service' => 'Troca óleo', 'average' => 120]];
+
+        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceOrderRepo->method('getAverageExecutionTimeByService')->willReturn($stats);
+
+        $controller = new ServiceOrderController(
+            $serviceOrderRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $this->createMock(ServiceRepositoryInterface::class),
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $this->createMock(ApproveQuotationUseCase::class),
+            $this->createMock(RejectQuotationUseCase::class),
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $request = $this->createMock(\Psr\Http\Message\ServerRequestInterface::class);
+        $response = new \Slim\Psr7\Response();
+
+        $result = $controller->getAverageExecutionTime($request, $response);
+        $this->assertEquals(200, $result->getStatusCode());
+        $body = json_decode((string)$result->getBody(), true);
+        $this->assertEquals($stats, $body['data']);
+    }
 }
