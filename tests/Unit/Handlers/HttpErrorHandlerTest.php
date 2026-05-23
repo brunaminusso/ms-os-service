@@ -17,19 +17,24 @@ class HttpErrorHandlerTest extends TestCase
     public function testRespondWithNotFoundAndGenericException(): void
     {
         $stream = $this->createMock(StreamInterface::class);
-        $stream->expects($this->once())->method('write')->with($this->stringContains('RESOURCE_NOT_FOUND'));
+        $stream->expects($this->once())
+            ->method('write')
+            ->with($this->stringContains('RESOURCE_NOT_FOUND'));
 
         $response = $this->createMock(ResponseInterface::class);
         $response->method('getBody')->willReturn($stream);
-        $response->expects($this->once())->method('withHeader')->with('Content-Type', 'application/json')->willReturnSelf();
+        $response->expects($this->once())
+            ->method('withHeader')
+            ->with('Content-Type', 'application/json')
+            ->willReturnSelf();
 
         $factory = $this->createMock(ResponseFactoryInterface::class);
         $factory->method('createResponse')->willReturn($response);
 
-        $handler = new class($factory, false) extends HttpErrorHandler {
+        $handler = new class ($factory, false) extends HttpErrorHandler {
             public function __construct($factory, $displayErrorDetails)
             {
-                // bypass parent constructor and set needed protected properties
+                // Bypass parent constructor and set needed protected properties.
                 $this->responseFactory = $factory;
                 $this->displayErrorDetails = $displayErrorDetails;
             }
@@ -44,18 +49,23 @@ class HttpErrorHandlerTest extends TestCase
         $res = $handler->respondTo(new NotFoundException('Ordem', 1));
         $this->assertSame($response, $res);
 
-        // now test generic exception with displayErrorDetails true
+        // Now test a generic exception with displayErrorDetails enabled.
         $stream2 = $this->createMock(StreamInterface::class);
-        $stream2->expects($this->once())->method('write')->with($this->stringContains('server_error'));
+        $stream2->expects($this->once())
+            ->method('write')
+            ->with($this->stringContains('server_error'));
 
         $response2 = $this->createMock(ResponseInterface::class);
         $response2->method('getBody')->willReturn($stream2);
-        $response2->expects($this->once())->method('withHeader')->with('Content-Type', 'application/json')->willReturnSelf();
+        $response2->expects($this->once())
+            ->method('withHeader')
+            ->with('Content-Type', 'application/json')
+            ->willReturnSelf();
 
         $factory2 = $this->createMock(ResponseFactoryInterface::class);
         $factory2->method('createResponse')->willReturn($response2);
 
-        $handler2 = new class($factory2, true) extends HttpErrorHandler {
+        $handler2 = new class ($factory2, true) extends HttpErrorHandler {
             public function __construct($factory, $displayErrorDetails)
             {
                 $this->responseFactory = $factory;

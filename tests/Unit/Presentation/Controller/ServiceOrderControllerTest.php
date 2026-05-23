@@ -163,21 +163,7 @@ class ServiceOrderControllerTest extends TestCase
 
     public function testAddPartReturnsWarningWhenValidationWarns(): void
     {
-        $client = new Client('Cliente P');
-        $vehicle = new Vehicle(
-            new VehiclePlate('XYZ9876'),
-            'Brand',
-            'Model',
-            2021,
-            $client
-        );
-        $order = new ServiceOrder('ORD-2', $client, $vehicle);
-
-        $part = new Part('Filtro', new Money(10.0));
-        $part->addStock(10);
-
         $serviceRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
-        $serviceRepo->method('findById')->willReturn($order);
         $serviceRepo->expects($this->once())->method('save');
         $partRepo = $this->createMock(PartRepositoryInterface::class);
         $validateUseCase = $this->createMock(ValidateStockUseCase::class);
@@ -189,6 +175,7 @@ class ServiceOrderControllerTest extends TestCase
         $serviceRepo->method('findById')->willReturn($order);
 
         $part = new Part('Filtro', Money::fromCents(1000));
+        $part->addStock(10);
         $partRepo->method('findById')->willReturn($part);
 
         $validateUseCase->method('execute')->willReturn([

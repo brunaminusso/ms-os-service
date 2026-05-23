@@ -77,5 +77,3 @@ class NotificationServiceTest extends TestCase
         $service->notifyPartBackInStock($client, 'Peça A', 5, $order);
     }
 }
-
-

@@ -39,4 +39,3 @@ class PartTest extends TestCase
         $this->assertTrue($part->isLowStock());
     }
 }
-
