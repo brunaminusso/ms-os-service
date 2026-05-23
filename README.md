@@ -29,19 +29,20 @@ composer seed
 
 ## Evidencias de cobertura
 
-- Workflow: https://github.com/brunaminusso/tech-challenge/actions/workflows/tests.yml
-- Gate: `composer coverage:check`
+- Workflow: https://github.com/brunaminusso/ms-os-service/actions/workflows/tests.yml
+- Artefato de cobertura publicado no CI: `build/coverage.xml`
+- Verificacao local opcional: `composer coverage:check`
 
 ## CI / Sonar
 
 - O workflow de CI executa build, testes, análise estática e um scan SonarQube opcional.
 - Para habilitar o Sonar no CI, defina os secrets do repositório: `SONAR_HOST_URL`, `MS_SONAR_TOKEN` e, se necessário, `SONAR_ORGANIZATION`.
 - O workflow só executa o step do Sonar quando `MS_SONAR_TOKEN` estiver presente.
-- Se preferir, use `scripts/set-sonar-secrets.sh` na raiz para gravar o token com o nome padrão do workflow.
+- O gate principal de cobertura fica centralizado no Sonar; `composer coverage:check` pode ser usado localmente como validacao adicional.
 
 ## Teste BDD
 
-- Fluxo de saga: [tests/Application/Saga/ServiceOrderSagaFlowBddTest.php](ms-os-service/tests/Application/Saga/ServiceOrderSagaFlowBddTest.php)
+- Fluxo principal da saga: [tests/Application/Saga/ServiceOrderSagaFlowBddTest.php](tests/Application/Saga/ServiceOrderSagaFlowBddTest.php)
 
 ## Consumo de eventos (RabbitMQ)
 
