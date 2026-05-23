@@ -155,4 +155,126 @@ final class ServiceOrderControllerTest extends TestCase
         $this->assertEquals(1, $body['available_stock']);
         $this->assertEquals(5, $body['requested_quantity']);
     }
+
+    public function testListReturnsOrdersWhenStatusParamPresent(): void
+    {
+        $client = new \App\Domain\Entity\Client('Cliente L');
+        $vehicle = new \App\Domain\Entity\Vehicle(new \App\Domain\ValueObject\VehiclePlate('ZZZ9999'), 'Brand', 'Model', 2020, $client);
+        $order = new \App\Domain\Entity\ServiceOrder('ORD-200', $client, $vehicle);
+
+        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceOrderRepo->method('findByStatus')->willReturn([$order]);
+
+        $controller = new ServiceOrderController(
+            $serviceOrderRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $this->createMock(ServiceRepositoryInterface::class),
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $this->createMock(ApproveQuotationUseCase::class),
+            $this->createMock(RejectQuotationUseCase::class),
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('GET', '/orders')
+            ->withQueryParams(['status' => 'received']);
+        $response = new \Slim\Psr7\Response();
+
+        $result = $controller->list($request, $response);
+        $this->assertEquals(200, $result->getStatusCode());
+        $body = json_decode((string)$result->getBody(), true);
+        $this->assertCount(1, $body['data']);
+        $this->assertEquals('ORD-200', $body['data'][0]['order_number']);
+    }
+
+    public function testUpdateStatusCallsUseCaseAndReturns200(): void
+    {
+        $client = new \App\Domain\Entity\Client('Cliente S');
+        $vehicle = new \App\Domain\Entity\Vehicle(new \App\Domain\ValueObject\VehiclePlate('SSS1111'), 'Brand', 'Model', 2020, $client);
+        $order = new \App\Domain\Entity\ServiceOrder('ORD-300', $client, $vehicle);
+
+        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceOrderRepo->method('findById')->willReturn($order);
+        $serviceOrderRepo->expects($this->once())->method('save');
+
+        $notification = $this->createMock(\App\Domain\Service\NotificationService::class);
+        $reservation = $this->createMock(\App\Domain\Service\PartReservationService::class);
+
+        $transitionUseCase = new \App\Application\UseCase\ServiceOrder\TransitionStatusUseCase(
+            $serviceOrderRepo,
+            $notification,
+            $reservation
+        );
+
+        $controller = new ServiceOrderController(
+            $serviceOrderRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $this->createMock(ServiceRepositoryInterface::class),
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $this->createMock(ApproveQuotationUseCase::class),
+            $this->createMock(RejectQuotationUseCase::class),
+            $transitionUseCase,
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $request = (new \Slim\Psr7\Factory\ServerRequestFactory())->createServerRequest('POST', '/orders/1/status')
+            ->withParsedBody(['status' => 'in_diagnostic']);
+        $response = new \Slim\Psr7\Response();
+
+        $result = $controller->updateStatus($request, $response, ['id' => 1]);
+        $this->assertEquals(200, $result->getStatusCode());
+        $body = json_decode((string)$result->getBody(), true);
+        $this->assertEquals('in_diagnostic', $body['status']);
+    }
+
+    public function testApproveQuotationCallsUseCaseAndReturns200(): void
+    {
+        $client = new \App\Domain\Entity\Client('Cliente A');
+        $vehicle = new \App\Domain\Entity\Vehicle(new \App\Domain\ValueObject\VehiclePlate('AAA1111'), 'Brand', 'Model', 2020, $client);
+        $order = new \App\Domain\Entity\ServiceOrder('ORD-400', $client, $vehicle);
+
+        // move to diagnostic then to awaiting approval
+        $order->changeStatus(\App\Domain\Enum\OrderStatus::IN_DIAGNOSTIC);
+        $order->sendQuotation();
+
+        $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
+        $serviceOrderRepo->method('findById')->willReturn($order);
+
+        $approveUseCase = $this->createMock(ApproveQuotationUseCase::class);
+        $approveUseCase->expects($this->once())->method('execute')->with($order)->willReturnCallback(function($o){
+            $o->approveQuotation();
+            return $o;
+        });
+
+        $controller = new ServiceOrderController(
+            $serviceOrderRepo,
+            $this->createMock(ClientRepositoryInterface::class),
+            $this->createMock(VehicleRepositoryInterface::class),
+            $this->createMock(ServiceRepositoryInterface::class),
+            $this->createMock(PartRepositoryInterface::class),
+            $this->createMock(CreateServiceOrderUseCase::class),
+            $approveUseCase,
+            $this->createMock(RejectQuotationUseCase::class),
+            $this->createMock(TransitionStatusUseCase::class),
+            $this->createMock(ValidateStockUseCase::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(MetricsRegistryInterface::class)
+        );
+
+        $request = $this->createMock(\Psr\Http\Message\ServerRequestInterface::class);
+        $response = new \Slim\Psr7\Response();
+
+        $result = $controller->approveQuotation($request, $response, ['id' => 1]);
+        $this->assertEquals(200, $result->getStatusCode());
+        $body = json_decode((string)$result->getBody(), true);
+        $this->assertTrue($body['quotation_approved']);
+    }
 }
