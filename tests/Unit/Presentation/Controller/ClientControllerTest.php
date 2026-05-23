@@ -32,7 +32,8 @@ final class ClientControllerTest extends TestCase
         $request = (new ServerRequestFactory())->createServerRequest('GET', '/clients')
             ->withQueryParams(['page' => 2, 'limit' => 10]);
 
-        $result = $controller->list($request, new Response());
+        $response = new Response();
+        $result = $controller->list($request, $response);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame(2, $body['page']);
@@ -47,7 +48,10 @@ final class ClientControllerTest extends TestCase
         $clientRepository->method('findById')->willReturn($client);
 
         $controller = $this->createController($clientRepository);
-        $result = $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/clients/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/clients/1');
+        $response = new Response();
+
+        $result = $controller->get($request, $response, ['id' => 1]);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame('Cliente A', $body['name']);
@@ -62,7 +66,10 @@ final class ClientControllerTest extends TestCase
         $controller = $this->createController($clientRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/clients/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/clients/1');
+        $response = new Response();
+
+        $controller->get($request, $response, ['id' => 1]);
     }
 
     public function testCreateReturns201WithCpf(): void
@@ -80,7 +87,8 @@ final class ClientControllerTest extends TestCase
                 'address' => 'Rua A, 123',
             ]);
 
-        $result = $controller->create($request, new Response());
+        $response = new Response();
+        $result = $controller->create($request, $response);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame(201, $result->getStatusCode());
@@ -101,7 +109,8 @@ final class ClientControllerTest extends TestCase
                 'cnpj' => '11.222.333/0001-81',
             ]);
 
-        $result = $controller->create($request, new Response());
+        $response = new Response();
+        $result = $controller->create($request, $response);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame(201, $result->getStatusCode());
@@ -113,7 +122,13 @@ final class ClientControllerTest extends TestCase
         $controller = $this->createController($this->createMock(ClientRepositoryInterface::class));
 
         $this->expectException(ValidationException::class);
-        $controller->create(new ServerRequestFactory()->createServerRequest('POST', '/clients')->withParsedBody(['cpf' => '529.982.247-25']), new Response());
+        $request = (new ServerRequestFactory())->createServerRequest('POST', '/clients')
+            ->withParsedBody([
+                'cpf' => '529.982.247-25',
+            ]);
+        $response = new Response();
+
+        $controller->create($request, $response);
     }
 
     public function testUpdateReturns200WithCnpj(): void
@@ -134,7 +149,8 @@ final class ClientControllerTest extends TestCase
                 'address' => 'Rua B, 456',
             ]);
 
-        $result = $controller->update($request, new Response(), ['id' => 1]);
+        $response = new Response();
+        $result = $controller->update($request, $response, ['id' => 1]);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame('Cliente Atualizado', $body['name']);
@@ -149,7 +165,10 @@ final class ClientControllerTest extends TestCase
         $controller = $this->createController($clientRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->update(new ServerRequestFactory()->createServerRequest('PUT', '/clients/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('PUT', '/clients/1');
+        $response = new Response();
+
+        $controller->update($request, $response, ['id' => 1]);
     }
 
     public function testDeleteRemovesClient(): void
@@ -161,7 +180,10 @@ final class ClientControllerTest extends TestCase
         $clientRepository->expects($this->once())->method('delete')->with($client);
 
         $controller = $this->createController($clientRepository);
-        $result = $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/clients/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/clients/1');
+        $response = new Response();
+
+        $result = $controller->delete($request, $response, ['id' => 1]);
 
         $this->assertSame(200, $result->getStatusCode());
     }
@@ -174,7 +196,10 @@ final class ClientControllerTest extends TestCase
         $controller = $this->createController($clientRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/clients/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/clients/1');
+        $response = new Response();
+
+        $controller->delete($request, $response, ['id' => 1]);
     }
 
     private function createController(ClientRepositoryInterface $clientRepository): ClientController

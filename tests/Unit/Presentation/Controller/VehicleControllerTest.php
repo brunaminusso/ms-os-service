@@ -33,7 +33,8 @@ final class VehicleControllerTest extends TestCase
         $request = (new ServerRequestFactory())->createServerRequest('GET', '/vehicles')
             ->withQueryParams(['page' => 2, 'limit' => 10]);
 
-        $result = $controller->list($request, new Response());
+        $response = new Response();
+        $result = $controller->list($request, $response);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame(2, $body['page']);
@@ -48,7 +49,10 @@ final class VehicleControllerTest extends TestCase
         $vehicleRepository->method('findById')->willReturn($vehicle);
 
         $controller = $this->createController($vehicleRepository);
-        $result = $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/vehicles/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/vehicles/1');
+        $response = new Response();
+
+        $result = $controller->get($request, $response, ['id' => 1]);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame('Brand', $body['brand']);
@@ -63,7 +67,10 @@ final class VehicleControllerTest extends TestCase
         $controller = $this->createController($vehicleRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/vehicles/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/vehicles/1');
+        $response = new Response();
+
+        $controller->get($request, $response, ['id' => 1]);
     }
 
     public function testListByClientReturnsVehicles(): void
@@ -77,11 +84,10 @@ final class VehicleControllerTest extends TestCase
         $clientRepository->method('findById')->willReturn($vehicle->getClient());
 
         $controller = $this->createController($vehicleRepository, $clientRepository);
-        $result = $controller->listByClient(
-            new ServerRequestFactory()->createServerRequest('GET', '/clients/1/vehicles'),
-            new Response(),
-            ['clientId' => 1]
-        );
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/clients/1/vehicles');
+        $response = new Response();
+
+        $result = $controller->listByClient($request, $response, ['clientId' => 1]);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame('ABC-1234', $body[0]['plate']);
@@ -95,7 +101,10 @@ final class VehicleControllerTest extends TestCase
         );
 
         $this->expectException(NotFoundException::class);
-        $controller->listByClient(new ServerRequestFactory()->createServerRequest('GET', '/clients/1/vehicles'), new Response(), ['clientId' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/clients/1/vehicles');
+        $response = new Response();
+
+        $controller->listByClient($request, $response, ['clientId' => 1]);
     }
 
     public function testCreateReturns201(): void
@@ -133,10 +142,13 @@ final class VehicleControllerTest extends TestCase
         );
 
         $this->expectException(ValidationException::class);
-        $controller->create(
-            (new ServerRequestFactory())->createServerRequest('POST', '/vehicles')->withParsedBody(['plate' => 'ABC1234']),
-            new Response()
-        );
+        $request = (new ServerRequestFactory())->createServerRequest('POST', '/vehicles')
+            ->withParsedBody([
+                'plate' => 'ABC1234',
+            ]);
+        $response = new Response();
+
+        $controller->create($request, $response);
     }
 
     public function testCreateThrowsWhenClientIsMissing(): void
@@ -179,7 +191,8 @@ final class VehicleControllerTest extends TestCase
                 'color' => 'Red',
             ]);
 
-        $result = $controller->update($request, new Response(), ['id' => 1]);
+        $response = new Response();
+        $result = $controller->update($request, $response, ['id' => 1]);
 
         $body = json_decode((string)$result->getBody(), true);
         $this->assertSame('ZZZ-9999', $body['plate']);
@@ -194,7 +207,10 @@ final class VehicleControllerTest extends TestCase
         $controller = $this->createController($vehicleRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->update(new ServerRequestFactory()->createServerRequest('PUT', '/vehicles/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('PUT', '/vehicles/1');
+        $response = new Response();
+
+        $controller->update($request, $response, ['id' => 1]);
     }
 
     public function testDeleteRemovesVehicle(): void
@@ -206,7 +222,10 @@ final class VehicleControllerTest extends TestCase
         $vehicleRepository->expects($this->once())->method('delete')->with($vehicle);
 
         $controller = $this->createController($vehicleRepository);
-        $result = $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/vehicles/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/vehicles/1');
+        $response = new Response();
+
+        $result = $controller->delete($request, $response, ['id' => 1]);
 
         $this->assertSame(200, $result->getStatusCode());
     }
@@ -219,7 +238,10 @@ final class VehicleControllerTest extends TestCase
         $controller = $this->createController($vehicleRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/vehicles/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/vehicles/1');
+        $response = new Response();
+
+        $controller->delete($request, $response, ['id' => 1]);
     }
 
     private function createController(

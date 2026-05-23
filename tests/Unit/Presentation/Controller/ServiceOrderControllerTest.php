@@ -62,13 +62,13 @@ final class ServiceOrderControllerTest extends TestCase
         $serviceOrderRepo->method('nextOrderNumber')->willReturn('ORD-1');
 
         $client = new Client('Cliente Test');
-            $vehicle = new Vehicle(
-                new VehiclePlate('ABC1234'),
-                'Brand',
-                'Model',
-                2020,
-                $client
-            );
+        $vehicle = new Vehicle(
+            new VehiclePlate('ABC1234'),
+            'Brand',
+            'Model',
+            2020,
+            $client
+        );
 
         $clientRepo = $this->createMock(ClientRepositoryInterface::class);
         $clientRepo->method('findById')->willReturn($client);
@@ -113,13 +113,13 @@ final class ServiceOrderControllerTest extends TestCase
     public function testAddPartReturnsWarningWhenLowStock(): void
     {
         $client = new Client('Cliente P');
-            $vehicle = new Vehicle(
-                new VehiclePlate('XYZ9876'),
-                'Brand',
-                'Model',
-                2021,
-                $client
-            );
+        $vehicle = new Vehicle(
+            new VehiclePlate('XYZ9876'),
+            'Brand',
+            'Model',
+            2021,
+            $client
+        );
         $order = new ServiceOrder('ORD-2', $client, $vehicle);
 
         $part = new Part('Filtro', new Money(10.0));
@@ -212,13 +212,13 @@ final class ServiceOrderControllerTest extends TestCase
     public function testUpdateStatusCallsUseCaseAndReturns200(): void
     {
         $client = new \App\Domain\Entity\Client('Cliente S');
-            $vehicle = new \App\Domain\Entity\Vehicle(
-                new \App\Domain\ValueObject\VehiclePlate('SSS1111'),
-                'Brand',
-                'Model',
-                2020,
-                $client
-            );
+        $vehicle = new \App\Domain\Entity\Vehicle(
+            new \App\Domain\ValueObject\VehiclePlate('SSS1111'),
+            'Brand',
+            'Model',
+            2020,
+            $client
+        );
         $order = new \App\Domain\Entity\ServiceOrder('ORD-300', $client, $vehicle);
 
         $serviceOrderRepo = $this->createMock(ServiceOrderRepositoryInterface::class);
@@ -262,13 +262,13 @@ final class ServiceOrderControllerTest extends TestCase
     public function testApproveQuotationCallsUseCaseAndReturns200(): void
     {
         $client = new \App\Domain\Entity\Client('Cliente A');
-            $vehicle = new \App\Domain\Entity\Vehicle(
-                new \App\Domain\ValueObject\VehiclePlate('AAA1111'),
-                'Brand',
-                'Model',
-                2020,
-                $client
-            );
+        $vehicle = new \App\Domain\Entity\Vehicle(
+            new \App\Domain\ValueObject\VehiclePlate('AAA1111'),
+            'Brand',
+            'Model',
+            2020,
+            $client
+        );
         $order = new \App\Domain\Entity\ServiceOrder('ORD-400', $client, $vehicle);
 
         // move to diagnostic then to awaiting approval

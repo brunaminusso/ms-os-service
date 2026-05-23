@@ -51,7 +51,10 @@ final class PartControllerTest extends TestCase
         $partRepository->method('findById')->willReturn(null);
 
         $controller = $this->createController($partRepository);
-        $result = $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/parts/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/parts/1');
+        $response = new Response();
+
+        $result = $controller->get($request, $response, ['id' => 1]);
 
         $this->assertSame(404, $result->getStatusCode());
     }
@@ -62,7 +65,10 @@ final class PartControllerTest extends TestCase
         $partRepository->method('findByCode')->willReturn(null);
 
         $controller = $this->createController($partRepository);
-        $result = $controller->getByCode(new ServerRequestFactory()->createServerRequest('GET', '/parts/F-1'), new Response(), ['code' => 'F-1']);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/parts/F-1');
+        $response = new Response();
+
+        $result = $controller->getByCode($request, $response, ['code' => 'F-1']);
 
         $this->assertSame(404, $result->getStatusCode());
     }
@@ -127,7 +133,8 @@ final class PartControllerTest extends TestCase
                 'active' => false,
             ]);
 
-        $result = $controller->update($request, new Response(), ['id' => 1]);
+        $response = new Response();
+        $result = $controller->update($request, $response, ['id' => 1]);
 
         $this->assertSame(200, $result->getStatusCode());
         $body = json_decode((string)$result->getBody(), true);
@@ -142,7 +149,10 @@ final class PartControllerTest extends TestCase
         $partRepository->method('findById')->willReturn(null);
 
         $controller = $this->createController($partRepository);
-        $result = $controller->update(new ServerRequestFactory()->createServerRequest('PUT', '/parts/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('PUT', '/parts/1');
+        $response = new Response();
+
+        $result = $controller->update($request, $response, ['id' => 1]);
 
         $this->assertSame(404, $result->getStatusCode());
     }
@@ -156,7 +166,10 @@ final class PartControllerTest extends TestCase
         $partRepository->expects($this->once())->method('save')->with($part);
 
         $controller = $this->createController($partRepository);
-        $result = $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/parts/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/parts/1');
+        $response = new Response();
+
+        $result = $controller->delete($request, $response, ['id' => 1]);
 
         $this->assertSame(200, $result->getStatusCode());
         $this->assertFalse($part->isActive());
@@ -168,7 +181,10 @@ final class PartControllerTest extends TestCase
         $partRepository->method('findById')->willReturn(null);
 
         $controller = $this->createController($partRepository);
-        $result = $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/parts/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/parts/1');
+        $response = new Response();
+
+        $result = $controller->delete($request, $response, ['id' => 1]);
 
         $this->assertSame(404, $result->getStatusCode());
     }
@@ -193,13 +209,21 @@ final class PartControllerTest extends TestCase
             ->method('notifyPartRestocked')
             ->with($part)
             ->willReturn([
-                ['order_id' => 1, 'order_number' => 'ORD-1', 'client_name' => 'Cliente A', 'part_name' => 'Filtro'],
+                [
+                    'order_id' => 1,
+                    'order_number' => 'ORD-1',
+                    'client_name' => 'Cliente A',
+                    'part_name' => 'Filtro',
+                ],
             ]);
 
         $controller = $this->createController($partRepository, $stockNotificationService);
 
         $request = (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')
-            ->withParsedBody(['quantity' => 5, 'operation' => 'add']);
+            ->withParsedBody([
+                'quantity' => 5,
+                'operation' => 'add',
+            ]);
 
         $result = $controller->updateStock($request, new Response(), ['id' => 1]);
 
@@ -221,7 +245,10 @@ final class PartControllerTest extends TestCase
         $controller = $this->createController($partRepository);
 
         $request = (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')
-            ->withParsedBody(['quantity' => 2, 'operation' => 'remove']);
+            ->withParsedBody([
+                'quantity' => 2,
+                'operation' => 'remove',
+            ]);
 
         $result = $controller->updateStock($request, new Response(), ['id' => 1]);
 
@@ -241,9 +268,15 @@ final class PartControllerTest extends TestCase
         $controller = $this->createController($partRepository);
 
         $this->expectException(ValidationException::class);
+        $request = (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')
+            ->withParsedBody([
+                'operation' => 'add',
+            ]);
+        $response = new Response();
+
         $controller->updateStock(
-            (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')->withParsedBody(['operation' => 'add']),
-            new Response(),
+            $request,
+            $response,
             ['id' => 1]
         );
     }
@@ -258,9 +291,16 @@ final class PartControllerTest extends TestCase
         $controller = $this->createController($partRepository);
 
         $this->expectException(ValidationException::class);
+        $request = (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')
+            ->withParsedBody([
+                'quantity' => 1,
+                'operation' => 'bad',
+            ]);
+        $response = new Response();
+
         $controller->updateStock(
-            (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')->withParsedBody(['quantity' => 1, 'operation' => 'bad']),
-            new Response(),
+            $request,
+            $response,
             ['id' => 1]
         );
     }
@@ -270,9 +310,16 @@ final class PartControllerTest extends TestCase
         $controller = $this->createController($this->createMock(PartRepositoryInterface::class));
 
         $this->expectException(NotFoundException::class);
+        $request = (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')
+            ->withParsedBody([
+                'quantity' => 1,
+                'operation' => 'add',
+            ]);
+        $response = new Response();
+
         $controller->updateStock(
-            (new ServerRequestFactory())->createServerRequest('POST', '/parts/1/stock')->withParsedBody(['quantity' => 1, 'operation' => 'add']),
-            new Response(),
+            $request,
+            $response,
             ['id' => 1]
         );
     }
@@ -285,9 +332,12 @@ final class PartControllerTest extends TestCase
         $partRepository->method('findLowStock')->willReturn([$part]);
 
         $controller = $this->createController($partRepository);
-        $result = $controller->getLowStock(new ServerRequestFactory()->createServerRequest('GET', '/parts/low-stock'), new Response());
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/parts/low-stock');
+        $response = new Response();
 
-        $body = json_decode((string)$result->getBody(), true);
+        $result = $controller->getLowStock($request, $response);
+
+        $body = json_decode((string) $result->getBody(), true);
         $this->assertSame(200, $result->getStatusCode());
         $this->assertSame('Filtro', $body['data'][0]['name']);
         $this->assertTrue($body['data'][0]['is_low_stock']);

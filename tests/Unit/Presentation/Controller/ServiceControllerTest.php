@@ -31,9 +31,10 @@ final class ServiceControllerTest extends TestCase
         $request = (new ServerRequestFactory())->createServerRequest('GET', '/services')
             ->withQueryParams(['page' => 2, 'limit' => 10]);
 
-        $result = $controller->list($request, new Response());
+        $response = new Response();
+        $result = $controller->list($request, $response);
 
-        $body = json_decode((string)$result->getBody(), true);
+        $body = json_decode((string) $result->getBody(), true);
         $this->assertSame(2, $body['page']);
         $this->assertSame('Serviço A', $body['data'][0]['name']);
     }
@@ -46,9 +47,12 @@ final class ServiceControllerTest extends TestCase
         $serviceRepository->method('findById')->willReturn($service);
 
         $controller = $this->createController($serviceRepository);
-        $result = $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/services/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/services/1');
+        $response = new Response();
 
-        $body = json_decode((string)$result->getBody(), true);
+        $result = $controller->get($request, $response, ['id' => 1]);
+
+        $body = json_decode((string) $result->getBody(), true);
         $this->assertSame('Serviço A', $body['name']);
         $this->assertSame('120,00', $body['price']);
     }
@@ -61,7 +65,10 @@ final class ServiceControllerTest extends TestCase
         $controller = $this->createController($serviceRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->get(new ServerRequestFactory()->createServerRequest('GET', '/services/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/services/1');
+        $response = new Response();
+
+        $controller->get($request, $response, ['id' => 1]);
     }
 
     public function testCreateReturns201(): void
@@ -79,9 +86,10 @@ final class ServiceControllerTest extends TestCase
                 'active' => true,
             ]);
 
-        $result = $controller->create($request, new Response());
+        $response = new Response();
+        $result = $controller->create($request, $response);
 
-        $body = json_decode((string)$result->getBody(), true);
+        $body = json_decode((string) $result->getBody(), true);
         $this->assertSame(201, $result->getStatusCode());
         $this->assertSame('Serviço B', $body['name']);
         $this->assertSame('150,50', $body['price']);
@@ -93,7 +101,11 @@ final class ServiceControllerTest extends TestCase
         $controller = $this->createController($this->createMock(ServiceRepositoryInterface::class));
 
         $this->expectException(ValidationException::class);
-        $controller->create(new ServerRequestFactory()->createServerRequest('POST', '/services')->withParsedBody(['name' => 'Serviço B']), new Response());
+        $request = (new ServerRequestFactory())->createServerRequest('POST', '/services')
+            ->withParsedBody(['name' => 'Serviço B']);
+        $response = new Response();
+
+        $controller->create($request, $response);
     }
 
     public function testUpdateReturns200(): void
@@ -114,9 +126,10 @@ final class ServiceControllerTest extends TestCase
                 'active' => false,
             ]);
 
-        $result = $controller->update($request, new Response(), ['id' => 1]);
+        $response = new Response();
+        $result = $controller->update($request, $response, ['id' => 1]);
 
-        $body = json_decode((string)$result->getBody(), true);
+        $body = json_decode((string) $result->getBody(), true);
         $this->assertSame('Serviço C', $body['name']);
         $this->assertSame('200,00', $body['price']);
         $this->assertFalse($body['active']);
@@ -130,7 +143,10 @@ final class ServiceControllerTest extends TestCase
         $controller = $this->createController($serviceRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->update(new ServerRequestFactory()->createServerRequest('PUT', '/services/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('PUT', '/services/1');
+        $response = new Response();
+
+        $controller->update($request, $response, ['id' => 1]);
     }
 
     public function testDeleteRemovesService(): void
@@ -142,7 +158,10 @@ final class ServiceControllerTest extends TestCase
         $serviceRepository->expects($this->once())->method('save')->with($service);
 
         $controller = $this->createController($serviceRepository);
-        $result = $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/services/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/services/1');
+        $response = new Response();
+
+        $result = $controller->delete($request, $response, ['id' => 1]);
 
         $this->assertSame(200, $result->getStatusCode());
         $this->assertFalse($service->isActive());
@@ -156,7 +175,10 @@ final class ServiceControllerTest extends TestCase
         $controller = $this->createController($serviceRepository);
 
         $this->expectException(NotFoundException::class);
-        $controller->delete(new ServerRequestFactory()->createServerRequest('DELETE', '/services/1'), new Response(), ['id' => 1]);
+        $request = (new ServerRequestFactory())->createServerRequest('DELETE', '/services/1');
+        $response = new Response();
+
+        $controller->delete($request, $response, ['id' => 1]);
     }
 
     private function createController(ServiceRepositoryInterface $serviceRepository): ServiceController
