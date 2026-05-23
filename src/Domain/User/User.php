@@ -45,6 +45,10 @@ class User implements JsonSerializable
     }
 
     #[\ReturnTypeWillChange]
+    /**
+     * @return array<string,mixed>
+     */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize(): array
     {
         return [

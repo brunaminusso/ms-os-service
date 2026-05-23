@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Service;
 
 use App\Domain\Entity\Part;
+use App\Domain\Entity\ServiceOrder;
 use App\Domain\Repository\ServiceOrderRepositoryInterface;
 use App\Domain\Enum\OrderStatus;
 
@@ -27,7 +28,7 @@ class StockNotificationService
      * quando ela volta ao estoque
      *
      * @param Part $part Peça que foi reabastecida
-     * @return array Lista de ordens notificadas
+     * @return array<int, array<string,mixed>> Lista de ordens notificadas
      */
     public function notifyPartRestocked(Part $part): array
     {
@@ -67,6 +68,9 @@ class StockNotificationService
      * - Ordem em status RECEIVED ou IN_DIAGNOSTIC (ainda montando orçamento)
      * - Ordem contém a peça solicitada
      * - Ordem não está cancelada
+     */
+    /**
+     * @return array<int, ServiceOrder>
      */
     private function findOrdersAwaitingPart(Part $part): array
     {

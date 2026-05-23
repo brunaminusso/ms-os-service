@@ -16,6 +16,9 @@ class PartReservationService
     ) {
     }
 
+    /**
+     * @return array<int, PartReservation>
+     */
     public function createReservationsForOrder(ServiceOrder $order): array
     {
         if (

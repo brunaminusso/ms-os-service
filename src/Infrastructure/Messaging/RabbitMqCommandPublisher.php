@@ -13,12 +13,15 @@ class RabbitMqCommandPublisher
     {
     }
 
+    /**
+     * @param array<string,mixed> $payload
+     */
     public function publish(string $exchange, string $routingKey, array $payload): void
     {
         $channel = $this->connection->channel();
         $channel->exchange_declare($exchange, 'direct', false, true, false);
 
-        $message = new AMQPMessage(json_encode($payload), [
+        $message = new AMQPMessage((string) json_encode($payload), [
             'content_type' => 'application/json',
         ]);
 

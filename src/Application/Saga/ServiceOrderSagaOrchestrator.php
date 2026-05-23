@@ -33,6 +33,9 @@ class ServiceOrderSagaOrchestrator
         $this->publisher->publish('billing.commands', 'billing.quotation.create', $payload);
     }
 
+    /**
+     * @param array<string,mixed> $paymentPayload
+     */
     public function startExecution(ServiceOrder $order, array $paymentPayload): void
     {
         $payload = [
@@ -56,6 +59,9 @@ class ServiceOrderSagaOrchestrator
         $this->notificationService->notifyOrderCancelled($order, $reason);
     }
 
+    /**
+     * @param array<string,mixed> $payload
+     */
     public function compensateExecutionFailure(ServiceOrder $order, string $reason, array $payload): void
     {
         $order->cancel('Falha na execucao: ' . $reason);
