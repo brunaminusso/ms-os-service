@@ -6,8 +6,8 @@ namespace Tests\Unit\Presentation\Controller;
 
 use App\Domain\Entity\Client;
 use App\Domain\Entity\Vehicle;
-use App\Domain\Repository\ClientRepositoryInterface;
 use App\Domain\Repository\VehicleRepositoryInterface;
+use App\Domain\Repository\ClientRepositoryInterface;
 use App\Domain\ValueObject\VehiclePlate;
 use App\Infrastructure\Exception\NotFoundException;
 use App\Infrastructure\Exception\ValidationException;
