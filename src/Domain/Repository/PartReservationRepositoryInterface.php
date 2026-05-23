@@ -13,9 +13,18 @@ interface PartReservationRepositoryInterface
 
     public function findById(int $id): ?PartReservation;
 
+    /**
+     * @return array<int, PartReservation>
+     */
     public function findByServiceOrder(ServiceOrder $order): array;
 
+    /**
+     * @return array<int, PartReservation>
+     */
     public function findExpired(): array;
 
+    /**
+     * @return array<int, PartReservation>
+     */
     public function findReserved(): array;
 }

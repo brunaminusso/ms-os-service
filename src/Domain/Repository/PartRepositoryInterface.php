@@ -12,10 +12,19 @@ interface PartRepositoryInterface
 
     public function findByCode(string $code): ?Part;
 
+    /**
+     * @return array<int, Part>
+     */
     public function findLowStock(): array;
 
+    /**
+     * @return array<int, Part>
+     */
     public function findActive(): array;
 
+    /**
+     * @return array<int, Part>
+     */
     public function findAll(int $page = 1, int $limit = 20): array;
 
     public function save(Part $part): void;

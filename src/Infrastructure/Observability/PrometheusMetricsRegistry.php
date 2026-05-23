@@ -7,7 +7,15 @@ namespace App\Infrastructure\Observability;
 class PrometheusMetricsRegistry implements MetricsRegistryInterface
 {
     private string $serviceName;
+
+    /**
+     * @var array<string, array<string, int>>
+     */
     private array $counters = [];
+
+    /**
+     * @var array<string, array<string, array<string,mixed>>>
+     */
     private array $histograms = [];
 
     public function __construct(string $serviceName = 'os-service')
@@ -85,12 +93,18 @@ class PrometheusMetricsRegistry implements MetricsRegistryInterface
         return implode("\n", $output) . "\n";
     }
 
+    /**
+     * @param array<string,string|int> $labels
+     */
     private function incrementCounter(string $name, array $labels): void
     {
         $labelSet = $this->formatLabels($labels);
         $this->counters[$name][$labelSet] = ($this->counters[$name][$labelSet] ?? 0) + 1;
     }
 
+    /**
+     * @param array<string,string|int> $labels
+     */
     private function observeHistogram(string $name, array $labels, float $value): void
     {
         $labelSet = $this->formatLabels($labels);
@@ -115,6 +129,9 @@ class PrometheusMetricsRegistry implements MetricsRegistryInterface
         }
     }
 
+    /**
+     * @param array<string,string|int> $labels
+     */
     private function formatLabels(array $labels): string
     {
         $parts = [];

@@ -40,6 +40,9 @@ class ServiceOrder
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $diagnosticNotes = null;
 
+    /**
+     * @var Collection<int, ServiceOrderService>
+     */
     #[ORM\OneToMany(
         targetEntity: ServiceOrderService::class,
         mappedBy: 'serviceOrder',
@@ -48,6 +51,9 @@ class ServiceOrder
     )]
     private Collection $services;
 
+    /**
+     * @var Collection<int, ServiceOrderPart>
+     */
     #[ORM\OneToMany(
         targetEntity: ServiceOrderPart::class,
         mappedBy: 'serviceOrder',
@@ -63,6 +69,9 @@ class ServiceOrder
         orphanRemoval: true,
     )]
     #[ORM\OrderBy(['changedAt' => 'ASC'])]
+    /**
+     * @var Collection<int, ServiceOrderStatusHistory>
+     */
     private Collection $statusHistory;
 
     #[ORM\Column(type: 'integer', nullable: true)]
@@ -207,6 +216,9 @@ class ServiceOrder
         return $this;
     }
 
+    /**
+     * @return Collection<int, ServiceOrderService>
+     */
     public function getServices(): Collection
     {
         return $this->services;
@@ -249,6 +261,9 @@ class ServiceOrder
         return $this;
     }
 
+    /**
+     * @return Collection<int, ServiceOrderPart>
+     */
     public function getParts(): Collection
     {
         return $this->parts;
@@ -439,6 +454,9 @@ class ServiceOrder
         return $this->quotationSentAt;
     }
 
+    /**
+     * @return Collection<int, ServiceOrderStatusHistory>
+     */
     public function getStatusHistory(): Collection
     {
         return $this->statusHistory;

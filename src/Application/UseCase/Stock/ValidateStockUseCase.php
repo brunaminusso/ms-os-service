@@ -15,6 +15,9 @@ class ValidateStockUseCase
     ) {
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     public function execute(
         ServiceOrder $order,
         Part $part,
