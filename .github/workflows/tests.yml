@@ -35,8 +35,16 @@ jobs:
       - name: Tests with coverage
         run: composer test:coverage
 
-      - name: Coverage gate
-        run: composer coverage:check
+      # Coverage gate removed to centralize coverage checks in Sonar
+      # (Was) - name: Coverage gate
+      #         run: composer coverage:check
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: build/coverage.xml
 
       - name: SonarQube scan
         if: ${{ env.MS_SONAR_TOKEN != '' }}
