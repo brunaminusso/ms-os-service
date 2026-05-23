@@ -40,6 +40,9 @@ enum OrderStatus: string
         };
     }
 
+    /**
+     * @return array<string, string[]>
+     */
     public static function getAllowedTransitions(): array
     {
         return [

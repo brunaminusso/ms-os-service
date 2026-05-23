@@ -16,6 +16,9 @@ interface ClientRepositoryInterface
 
     public function findByEmail(string $email): ?Client;
 
+    /**
+     * @return array<int, Client>
+     */
     public function findAll(int $page = 1, int $limit = 20): array;
 
     public function save(Client $client): void;

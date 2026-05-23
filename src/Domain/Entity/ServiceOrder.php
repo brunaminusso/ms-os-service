@@ -46,6 +46,10 @@ class ServiceOrder
         cascade: ['persist', 'remove'],
         orphanRemoval: true,
     )]
+    /**
+     * @var Collection<int, ServiceOrderService>
+     */
+    )]
     private Collection $services;
 
     #[ORM\OneToMany(
@@ -53,6 +57,10 @@ class ServiceOrder
         mappedBy: 'serviceOrder',
         cascade: ['persist', 'remove'],
         orphanRemoval: true,
+    )]
+    /**
+     * @var Collection<int, ServiceOrderPart>
+     */
     )]
     private Collection $parts;
 
@@ -63,6 +71,9 @@ class ServiceOrder
         orphanRemoval: true,
     )]
     #[ORM\OrderBy(['changedAt' => 'ASC'])]
+    /**
+     * @var Collection<int, ServiceOrderStatusHistory>
+     */
     private Collection $statusHistory;
 
     #[ORM\Column(type: 'integer', nullable: true)]
@@ -207,6 +218,9 @@ class ServiceOrder
         return $this;
     }
 
+    /**
+     * @return Collection<int, ServiceOrderService>
+     */
     public function getServices(): Collection
     {
         return $this->services;
@@ -249,6 +263,9 @@ class ServiceOrder
         return $this;
     }
 
+    /**
+     * @return Collection<int, ServiceOrderPart>
+     */
     public function getParts(): Collection
     {
         return $this->parts;
@@ -439,6 +456,9 @@ class ServiceOrder
         return $this->quotationSentAt;
     }
 
+    /**
+     * @return Collection<int, ServiceOrderStatusHistory>
+     */
     public function getStatusHistory(): Collection
     {
         return $this->statusHistory;

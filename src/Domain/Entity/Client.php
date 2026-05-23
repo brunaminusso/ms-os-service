@@ -38,9 +38,15 @@ class Client
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $address = null;
 
+    /**
+     * @var Collection<int, Vehicle>
+     */
     #[ORM\OneToMany(targetEntity: Vehicle::class, mappedBy: 'client', cascade: ['persist'])]
     private Collection $vehicles;
 
+    /**
+     * @var Collection<int, ServiceOrder>
+     */
     #[ORM\OneToMany(targetEntity: ServiceOrder::class, mappedBy: 'client')]
     private Collection $serviceOrders;
 
@@ -138,6 +144,9 @@ class Client
         return $this;
     }
 
+    /**
+     * @return Collection<int, Vehicle>
+     */
     public function getVehicles(): Collection
     {
         return $this->vehicles;
@@ -152,6 +161,9 @@ class Client
         return $this;
     }
 
+    /**
+     * @return Collection<int, ServiceOrder>
+     */
     public function getServiceOrders(): Collection
     {
         return $this->serviceOrders;

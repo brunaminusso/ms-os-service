@@ -38,6 +38,9 @@ class Vehicle
     #[ORM\JoinColumn(nullable: false)]
     private Client $client;
 
+    /**
+     * @var Collection<int, ServiceOrder>
+     */
     #[ORM\OneToMany(targetEntity: ServiceOrder::class, mappedBy: 'vehicle')]
     private Collection $serviceOrders;
 
@@ -136,6 +139,9 @@ class Vehicle
         return $this;
     }
 
+    /**
+     * @return Collection<int, ServiceOrder>
+     */
     public function getServiceOrders(): Collection
     {
         return $this->serviceOrders;

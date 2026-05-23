@@ -12,11 +12,23 @@ interface NotificationRepositoryInterface
 
     public function findById(int $id): ?Notification;
 
+    /**
+     * @return array<int, Notification>
+     */
     public function findAll(int $page = 1, int $limit = 20): array;
 
+    /**
+     * @return array<int, Notification>
+     */
     public function findByClient(int $clientId, int $page = 1, int $limit = 20): array;
 
+    /**
+     * @return array<int, Notification>
+     */
     public function findByServiceOrder(int $serviceOrderId): array;
 
+    /**
+     * @return array<int, Notification>
+     */
     public function findPending(): array;
 }
