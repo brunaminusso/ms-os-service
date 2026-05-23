@@ -128,4 +128,3 @@ final class ServiceOrderTest extends TestCase
         $this->assertEquals(0.0, $order->getQuotationTotal()->getAmount());
     }
 }
-
