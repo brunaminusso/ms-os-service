@@ -74,7 +74,16 @@ final class NotificationRepositoryTest extends TestCase
         $query = $this->createQueryMock($expected);
 
         $queryBuilder = $this->getMockBuilder(stdClass::class)
-            ->addMethods(['select', 'from', 'where', 'setParameter', 'orderBy', 'setMaxResults', 'setFirstResult', 'getQuery'])
+            ->addMethods([
+                'select',
+                'from',
+                'where',
+                'setParameter',
+                'orderBy',
+                'setMaxResults',
+                'setFirstResult',
+                'getQuery',
+            ])
             ->getMock();
 
         $queryBuilder->expects($this->once())->method('select')->with('n')->willReturnSelf();
@@ -105,13 +114,18 @@ final class NotificationRepositoryTest extends TestCase
 
         $queryBuilder->expects($this->once())->method('select')->with('n')->willReturnSelf();
         $queryBuilder->expects($this->once())->method('from')->with(Notification::class, 'n')->willReturnSelf();
-        $queryBuilder->expects($this->once())->method('where')->with('n.serviceOrder = :serviceOrderId')->willReturnSelf();
+        $queryBuilder->expects($this->once())
+            ->method('where')
+            ->with('n.serviceOrder = :serviceOrderId')
+            ->willReturnSelf();
         $queryBuilder->expects($this->once())->method('setParameter')->with('serviceOrderId', 21)->willReturnSelf();
         $queryBuilder->expects($this->once())->method('orderBy')->with('n.createdAt', 'ASC')->willReturnSelf();
         $queryBuilder->expects($this->once())->method('getQuery')->willReturn($query);
 
         $entityManager = $this->createEntityManagerMock();
-        $entityManager->expects($this->once())->method('createQueryBuilder')->willReturn($queryBuilder);
+        $entityManager->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturn($queryBuilder);
 
         $repository = new NotificationRepository($entityManager);
 
