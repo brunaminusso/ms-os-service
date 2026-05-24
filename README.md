@@ -65,7 +65,7 @@ Compensacoes:
 - Pagamento recusado/expirado: OS cancela a ordem e libera reservas.
 - Reembolso falhou: OS registra a falha e notifica.
 
-## Endpoints (planejados)
+## Endpoints
 
 - POST `/service-orders`
 - PATCH `/service-orders/{id}/status`
