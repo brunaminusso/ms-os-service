@@ -1,6 +1,6 @@
 # OS Service
 
-[![Coverage](https://img.shields.io/github/actions/workflow/status/brunaminusso/ms-os-service/tests.yml?branch=main&label=coverage)](https://github.com/brunaminusso/ms-os-service/actions/workflows/tests.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ms-os-service&metric=coverage)](https://sonarcloud.io/dashboard?id=ms-os-service)
 
 Servico responsavel por gerenciar ordens de servico (OS) e os cadastros base
 (clientes, veiculos, servicos e pecas), mantendo o limite de 3 microsservicos.
@@ -35,6 +35,7 @@ composer seed
 
 ## CI / Sonar
 
+- Painel Sonar: https://sonarcloud.io/dashboard?id=ms-os-service
 - O workflow de CI executa build, testes, análise estática e um scan SonarQube opcional.
 - Para habilitar o Sonar no CI, defina os secrets do repositório: `SONAR_HOST_URL`, `MS_SONAR_TOKEN` e, se necessário, `SONAR_ORGANIZATION`.
 - O workflow só executa o step do Sonar quando `MS_SONAR_TOKEN` estiver presente.
